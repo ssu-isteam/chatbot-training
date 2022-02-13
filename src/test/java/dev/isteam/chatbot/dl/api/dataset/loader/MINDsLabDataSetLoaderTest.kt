@@ -1,13 +1,5 @@
 package dev.isteam.chatbot.dl.api.dataset.loader
 
-import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
-import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
-import dev.isteam.chatbot.dl.api.vector.DataSource
-import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
-import org.deeplearning4j.bagofwords.vectorizer.TfidfVectorizer
-import org.deeplearning4j.datasets.fetchers.MnistDataFetcher
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.util.ModelSerializer
 import org.junit.jupiter.api.Test
 
 

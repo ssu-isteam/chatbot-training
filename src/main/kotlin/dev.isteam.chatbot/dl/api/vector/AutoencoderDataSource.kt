@@ -2,27 +2,23 @@ package dev.isteam.chatbot.dl.api.vector
 
 import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.RawDataSet
-import org.deeplearning4j.nn.api.Layer
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.MultiDataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import org.nd4j.linalg.factory.Nd4j
-import org.nd4j.linalg.util.FeatureUtil
 
-class DataSource(
-    private val packedRawDataSet: PackedRawDataSet,
-    private val ktfid: KoreanTfidfVectorizer,
-    private val batchSize: Int = 100,
-    private var preProcessor: DataSetPreProcessor? = null,
-    private var iterator: ListIterator<RawDataSet> = packedRawDataSet.rawDataSets.listIterator(),
-    private val labels: MutableList<String> = IntRange(
-        0,
-        packedRawDataSet.rawDataSets.size - 1
-    ).map { it.toString() }.toMutableList(),
+class AutoencoderDataSource(private val packedRawDataSet: PackedRawDataSet,
+private val ktfid: KoreanTfidfVectorizer,
+private val batchSize: Int = 100,
+private var preProcessor: DataSetPreProcessor? = null,
+private var iterator: Iterator<RawDataSet> = packedRawDataSet.rawDataSets.iterator(),
+private val labels: MutableList<String> = IntRange(
+    0,
+    packedRawDataSet.rawDataSets.size - 1
+).map { it.toString() }.toMutableList(),
 
-    var currentIndex:Int = 0,
+var  currentCount:Long = 0,
 ) : DataSetIterator {
     /**
      * Removes from the underlying collection the last element returned by this iterator.
@@ -46,11 +42,17 @@ class DataSource(
      * @return the next data applyTransformToDestination
      */
     override fun next(num: Int): DataSet {
-        var rawDatSet = iterator.next()
-        var idx = packedRawDataSet.rawDataSets.indexOf(rawDatSet)
-
-        //var compressed = autoEncoder.activateSelectedLayers(0,1,rawFeatures)
-        return ktfid.vectorize(rawDatSet.question,idx.toString())
+        currentCount = 0
+        var features = Nd4j.zeros(num, inputColumns())
+        for(i in 0 until num){
+            if(!hasNext())
+                break
+            var rawDataSet = iterator.next()
+            var f = ktfid.transform(rawDataSet.question)
+            features.putRow(i.toLong(),f);
+            currentCount++;
+        }
+        return DataSet(features,null)
     }
 
     private fun mdsToDataSet(mds: MultiDataSet): DataSet {
@@ -78,7 +80,7 @@ class DataSource(
      * Returns the next element in the iteration.
      */
     override fun next(): DataSet {
-        return nextDataSet(batchSize)
+        return next(batchSize)
     }
 
 
@@ -89,9 +91,6 @@ class DataSource(
         for (i in 0 until numExamples) {
             if (!hasNext())
                 break
-
-            currentIndex = iterator.nextIndex()
-
             var rawDataSet = iterator.next()
             var rawFeatures = ktfid.transform(rawDataSet.question).toDoubleVector()
 
@@ -100,8 +99,6 @@ class DataSource(
             }
             if(!hasNext())
                 break
-
-            currentIndex = iterator.nextIndex()
 
             var nextDataSet = iterator.next()
             var nextFeatures = ktfid.transform(nextDataSet.question).toDoubleVector()
@@ -162,7 +159,7 @@ class DataSource(
      * Resets the iterator back to the beginning
      */
     override fun reset() {
-        iterator = packedRawDataSet.rawDataSets.listIterator()
+        iterator = packedRawDataSet.rawDataSets.iterator()
     }
 
     /**

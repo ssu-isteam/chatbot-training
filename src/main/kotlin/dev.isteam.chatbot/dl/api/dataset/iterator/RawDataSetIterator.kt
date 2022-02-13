@@ -7,8 +7,8 @@ import org.deeplearning4j.text.sentenceiterator.SentencePreProcessor
 class RawDataSetIterator(
     private val packedRawDataSet: PackedRawDataSet,
     private val iterativeType: IterativeType,
-    var iterator: Iterator<String> = if (iterativeType == IterativeType.QUESTION) packedRawDataSet.rawDataSets.map { it.question }
-        .iterator() else packedRawDataSet.rawDataSets.map { it.answer }.iterator()
+    var iterator: Iterator<String> = if (iterativeType == IterativeType.QUESTION) packedRawDataSet.rawDataSets.map { it.question!! }
+        .iterator() else packedRawDataSet.rawDataSets.map { it.answer!! }.iterator()
 ) : SentenceIterator {
 
     private var preProcessor: SentencePreProcessor? = null
@@ -36,8 +36,8 @@ class RawDataSetIterator(
      * Resets the iterator to the beginning
      */
     override fun reset() {
-        iterator = if (iterativeType == IterativeType.QUESTION) packedRawDataSet.rawDataSets.map { it.question }
-            .iterator() else packedRawDataSet.rawDataSets.map { it.answer }.iterator()
+        iterator = if (iterativeType == IterativeType.QUESTION) packedRawDataSet.rawDataSets.map { it.question!! }
+            .iterator() else packedRawDataSet.rawDataSets.map { it.answer!! }.iterator()
     }
 
     /**
