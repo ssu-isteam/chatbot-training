@@ -4,14 +4,21 @@ import dev.isteam.chatbot.dl.api.dataset.DataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.RawDataSet
 import me.tongfei.progressbar.ProgressBar
+import me.tongfei.progressbar.ProgressBarBuilder
+import me.tongfei.progressbar.ProgressBarStyle
 import org.json.JSONObject
 import java.io.FileInputStream
+import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 
 class VIVEDataSetLoader(private val paths:Array<String>) : DataSetLoader{
     override fun load(): CompletableFuture<PackedRawDataSet> {
         return CompletableFuture.supplyAsync{
-            var pb = ProgressBar("Reading files", paths.size.toLong())
+            var pb = ProgressBarBuilder().setTaskName("Reading files")
+                .setInitialMax(paths.size.toLong())
+                .setStyle(ProgressBarStyle.ASCII)
+                .setSpeedUnit(ChronoUnit.SECONDS)
+                .build()
 
             var packedRawDataSet = PackedRawDataSet()
             for (path in paths) {
