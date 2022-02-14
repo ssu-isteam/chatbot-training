@@ -6,15 +6,19 @@ import dev.isteam.chatbot.dl.api.vector.KoreanTfidfVectorizer
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
 import me.tongfei.progressbar.ProgressBarBuilder
 import me.tongfei.progressbar.ProgressBarStyle
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
+import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.evaluation.classification.Evaluation
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.nio.file.Paths
 import java.time.temporal.ChronoUnit
+
 
 val logger = LoggerFactory.getLogger("Main")
 
 fun main2(args: Array<String>) {
-    val motherPath = "D:\\ISTEAM\\AI 데이터 셋\\한국어 대화 요약\\Training\\[라벨]한국어대화요약_train"
+    val motherPath = ""
     val files =
         arrayOf("개인및관계.json"/*"미용과건강.json","상거래(쇼핑).json","시사교육.json","식음료.json","여가생활.json","일과직업.json","주거와생활.json","행사.json"*/)
 
@@ -34,7 +38,7 @@ fun main2(args: Array<String>) {
     var tokenizerFactory = KoreanTokenizerFactory()
     tokenizerFactory.tokenPreProcessor = KoreanTokenPreprocessor()
 
-    var batchSize = 1000
+    var batchSize = 9000
 
     logger.info("Starting fitting tfidf vectorizer....")
 
@@ -62,8 +66,8 @@ fun main2(args: Array<String>) {
             while (dataSource.hasNext()) {
                 var data = dataSource.next()
                 network.fit(data.features, data.features)
-                stepBy(dataSource.currentCount)
             }
+            logger.info("${(i/ epoch.toDouble()) * 100}%")
             dataSource.reset()
         }
     }
@@ -77,7 +81,7 @@ fun main2(args: Array<String>) {
         //  logger.info("eval: predicted: $output , real: ${data.features}")
         eval.eval(data.features, output)
     }
-    //  WordVectorSerializer.writeVocabCache(koreanTfidfVectorizer.vocabCache,File("vocab.cache"))
-    //  ModelSerializer.writeModel(network,"autoencoder.model",true)
+    WordVectorSerializer.writeVocabCache(koreanTfidfVectorizer.vocabCache,File("vocab.cache"))
+    ModelSerializer.writeModel(network,"autoencoder.model",true)
     logger.info(eval.stats())
 }
