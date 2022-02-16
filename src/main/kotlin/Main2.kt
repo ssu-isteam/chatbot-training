@@ -18,7 +18,7 @@ import java.time.temporal.ChronoUnit
 val logger = LoggerFactory.getLogger("Main")
 
 fun main2(args: Array<String>) {
-    val motherPath = ""
+    val motherPath = "D:\\ISTEAM\\AI 데이터 셋\\한국어 대화 요약\\Training\\[라벨]한국어대화요약_train"
     val files =
         arrayOf("개인및관계.json"/*"미용과건강.json","상거래(쇼핑).json","시사교육.json","식음료.json","여가생활.json","일과직업.json","주거와생활.json","행사.json"*/)
 
@@ -30,7 +30,7 @@ fun main2(args: Array<String>) {
     var packedRawDataSet = viveDataSetLoader.load().get()
 
 
-    //  packedRawDataSet.rawDataSets = ArrayList( packedRawDataSet.rawDataSets.subList(0,100))
+    //packedRawDataSet.rawDataSets = ArrayList( packedRawDataSet.rawDataSets.subList(0,5000))
 
     logger.info("Reading files completed. Total count: ${packedRawDataSet.rawDataSets.size}")
 
@@ -38,7 +38,7 @@ fun main2(args: Array<String>) {
     var tokenizerFactory = KoreanTokenizerFactory()
     tokenizerFactory.tokenPreProcessor = KoreanTokenPreprocessor()
 
-    var batchSize = 9000
+    var batchSize = 5000
 
     logger.info("Starting fitting tfidf vectorizer....")
 
@@ -48,10 +48,11 @@ fun main2(args: Array<String>) {
 
     val epoch = 100
 
+
     var dataSource =
         AutoencoderDataSource(packedRawDataSet = packedRawDataSet, ktfid = koreanTfidfVectorizer, batchSize = batchSize)
 
-    var network = KoreanNeuralNetwork.buildAutoEncoder(koreanTfidfVectorizer.nIn())
+    var network = KoreanNeuralNetwork.buildDeepAutoEncoder(koreanTfidfVectorizer.nIn())
     network.init()
 
 
@@ -66,8 +67,9 @@ fun main2(args: Array<String>) {
             while (dataSource.hasNext()) {
                 var data = dataSource.next()
                 network.fit(data.features, data.features)
+                stepBy(dataSource.currentCount)
             }
-            logger.info("${(i/ epoch.toDouble()) * 100}%")
+      //      logger.info("${(i/ epoch.toDouble()) * 100}%")
             dataSource.reset()
         }
     }

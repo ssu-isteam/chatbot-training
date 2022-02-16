@@ -1,25 +1,18 @@
 package dev.isteam.chatbot.dl.engines
 
-import org.bytedeco.opencv.opencv_ml.LogisticRegression
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.BackpropType
 import org.deeplearning4j.nn.conf.GradientNormalization
-import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
-import org.deeplearning4j.nn.conf.dropout.Dropout
 import org.deeplearning4j.nn.conf.layers.*
-import org.deeplearning4j.nn.conf.layers.variational.BernoulliReconstructionDistribution
 import org.deeplearning4j.nn.conf.layers.variational.VariationalAutoencoder
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
-import org.nd4j.linalg.learning.config.AdaGrad
 import org.nd4j.linalg.learning.config.Adam
 import org.nd4j.linalg.learning.config.Nesterovs
-import org.nd4j.linalg.learning.config.RmsProp
-import org.nd4j.linalg.learning.regularization.L2Regularization
-import org.nd4j.linalg.learning.regularization.Regularization
 import org.nd4j.linalg.lossfunctions.LossFunctions
+import kotlin.math.pow
 
 object KoreanNeuralNetwork {
     const val LSTM_LAYERSIZE = 200
@@ -48,30 +41,15 @@ object KoreanNeuralNetwork {
             .seed(1337)
             .weightInit(WeightInit.XAVIER)
             .updater(Adam(0.05))
-            .regularization(listOf(L2Regularization(1e-4)))
-            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .list()
-            .layer(0,AutoEncoder.Builder()
-                .activation(Activation.SIGMOID)
-                .nIn(inputSize).nOut(250).build())
-            .layer(1,AutoEncoder.Builder()
-                .activation(Activation.SIGMOID)
-                .nIn(250).nOut(50).build())
-            .layer(2,AutoEncoder.Builder()
-                .activation(Activation.SIGMOID)
-                .nIn(50).nOut(250).build())
-            .layer(3,OutputLayer.Builder()
-                .lossFunction(LossFunctions.LossFunction.MSE)
-                .nIn(250).nOut(inputSize)
-                .build())
-            .backpropType(BackpropType.Standard)
             .build()
         return MultiLayerNetwork(modelConf)
     }
     fun buildAutoEncoder(inputSize: Int) : MultiLayerNetwork{
+
         var modelConf = NeuralNetConfiguration.Builder()
             .seed(1337)
-            .updater(Adam(1e-4))
+            .updater(Adam(1e-3))
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .list()
             .layer(0, DenseLayer.Builder().activation(Activation.TANH).nIn(inputSize).nOut(1000).build())
@@ -79,9 +57,37 @@ object KoreanNeuralNetwork {
             .layer(2,  DenseLayer.Builder().activation(Activation.TANH).nIn(500).nOut(100).build())
             .layer(3,  DenseLayer.Builder().activation(Activation.TANH).nIn(100).nOut(500).build())
             .layer(4,  DenseLayer.Builder().activation(Activation.TANH).nIn(500).nOut(1000).build())
-            .layer(5,  OutputLayer.Builder().activation(Activation.RELU).nIn(1000).nOut(inputSize).lossFunction(LossFunctions.LossFunction.SQUARED_LOSS).build())
+            .layer(5,  OutputLayer.Builder().activation(Activation.TANH).nIn(1000).nOut(inputSize).lossFunction(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY) .build())
             .build()
         return MultiLayerNetwork(modelConf)
+    }
+    fun buildDeepAutoEncoder(inputSize: Int) : MultiLayerNetwork{
+
+        val unit = 7
+        var modelConf = NeuralNetConfiguration.Builder()
+            .seed(12356)
+            .updater(Adam(1e-3))
+            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+            .list()
+        var layerSizes = arrayListOf<Int>().also {
+            var i = 0
+            while(inputSize / unit.toDouble().pow(i).toInt() > 50){
+                it.add(inputSize / unit.toDouble().pow(i).toInt())
+                i++
+            }
+        }
+        (1 until layerSizes.size).forEach { index ->
+            modelConf.layer(DenseLayer.Builder().nIn(layerSizes[index-1]).nOut(layerSizes[index]).activation(Activation.TANH).build())
+            println("SHAPE: (${layerSizes[index-1]},${layerSizes[index]})")
+        }
+        layerSizes.reverse()
+        (1 until layerSizes.size).forEach { index ->
+            modelConf.layer(DenseLayer.Builder().nIn(layerSizes[index-1]).nOut(layerSizes[index]).activation(Activation.TANH).build())
+            println("SHAPE: (${layerSizes[index-1]},${layerSizes[index]})")
+        }
+        modelConf.layer(OutputLayer.Builder().nIn(layerSizes.last()).nOut(layerSizes.last()).activation(Activation.RELU).lossFunction(LossFunctions.LossFunction.SQUARED_LOSS).build())
+
+        return MultiLayerNetwork(modelConf.build())
     }
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
         var conf = NeuralNetConfiguration.Builder()
