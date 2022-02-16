@@ -18,7 +18,7 @@ import java.time.temporal.ChronoUnit
 val logger = LoggerFactory.getLogger("Main")
 
 fun main2(args: Array<String>) {
-    val motherPath = "D:\\ISTEAM\\AI 데이터 셋\\한국어 대화 요약\\Training\\[라벨]한국어대화요약_train"
+    val motherPath = ""
     val files =
         arrayOf("개인및관계.json"/*"미용과건강.json","상거래(쇼핑).json","시사교육.json","식음료.json","여가생활.json","일과직업.json","주거와생활.json","행사.json"*/)
 
@@ -52,7 +52,7 @@ fun main2(args: Array<String>) {
     var dataSource =
         AutoencoderDataSource(packedRawDataSet = packedRawDataSet, ktfid = koreanTfidfVectorizer, batchSize = batchSize)
 
-    var network = KoreanNeuralNetwork.buildDeepAutoEncoder(koreanTfidfVectorizer.nIn())
+    var network = KoreanNeuralNetwork.buildVariationalAutoEncoder(koreanTfidfVectorizer.nIn())
     network.init()
 
 
