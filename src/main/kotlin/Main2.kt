@@ -69,7 +69,7 @@ fun main2(args: Array<String>) {
                 network.fit(data.features, data.features)
                 stepBy(dataSource.currentCount)
             }
-      //      logger.info("${(i/ epoch.toDouble()) * 100}%")
+            logger.info("${(i/ epoch.toDouble()) * 100}%")
             dataSource.reset()
         }
     }

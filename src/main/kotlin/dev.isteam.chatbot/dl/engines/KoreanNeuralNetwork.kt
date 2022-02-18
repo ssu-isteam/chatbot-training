@@ -14,6 +14,7 @@ import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.learning.config.Adam
 import org.nd4j.linalg.learning.config.Nesterovs
+import org.nd4j.linalg.learning.config.RmsProp
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import kotlin.math.pow
 
@@ -114,7 +115,7 @@ object KoreanNeuralNetwork {
         val unit = 7
         var modelConf = NeuralNetConfiguration.Builder()
             .seed(12356)
-            .updater(Adam(1e-3))
+            .updater(RmsProp(1e-2))
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .list()
         var layerSizes = arrayListOf<Int>().also {
@@ -129,10 +130,11 @@ object KoreanNeuralNetwork {
             .encoderLayerSizes(*layerSizes.slice(1 until layerSizes.size).toIntArray())
         layerSizes.reverse()
         vae.nOut(layerSizes.last()).decoderLayerSizes(*layerSizes.slice(1 until layerSizes.size).toIntArray())
-            .lossFunction(Activation.RELU, LossFunctions.LossFunction.MSE)
+            .lossFunction(Activation.TANH, LossFunctions.LossFunction.SQUARED_LOSS)
             .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue)
+        modelConf.layer(vae.build())
         modelConf.layer(
-            OutputLayer.Builder().nIn(layerSizes.last()).nOut(layerSizes.last()).activation(Activation.RELU)
+            OutputLayer.Builder().nIn(layerSizes.last()).nOut(layerSizes.last()).activation(Activation.TANH)
                 .lossFunction(LossFunctions.LossFunction.SQUARED_LOSS).build()
         )
 
