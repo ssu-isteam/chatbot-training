@@ -140,6 +140,28 @@ object KoreanNeuralNetwork {
 
         return MultiLayerNetwork(modelConf.build())
     }
+    fun buildVariationalAutoEncoder_(inputSize: Int): MultiLayerNetwork {
+        var modelConf = NeuralNetConfiguration.Builder()
+            .seed(12356)
+            .updater(RmsProp(1e-2))
+            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+            .list()
+        var layerSizes = intArrayOf(1024, 512, 256, 128)
+        var vae = VariationalAutoencoder.Builder()
+            .nIn(layerSizes.first()).nOut(layerSizes.last())
+            .encoderLayerSizes(*layerSizes.slice(1 until layerSizes.size).toIntArray())
+        layerSizes.reverse()
+        vae.nOut(layerSizes.last()).decoderLayerSizes(*layerSizes.slice(1 until layerSizes.size).toIntArray())
+            .lossFunction(Activation.TANH, LossFunctions.LossFunction.SQUARED_LOSS)
+            .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue)
+        modelConf.layer(vae.build())
+        modelConf.layer(
+            OutputLayer.Builder().nIn(layerSizes.last()).nOut(layerSizes.last()).activation(Activation.TANH)
+                .lossFunction(LossFunctions.LossFunction.SQUARED_LOSS).build()
+        )
+
+        return MultiLayerNetwork(modelConf.build())
+    }
 
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
         var conf = NeuralNetConfiguration.Builder()

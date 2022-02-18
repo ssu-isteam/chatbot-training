@@ -52,7 +52,7 @@ fun main2(args: Array<String>) {
     var dataSource =
         AutoencoderDataSource(packedRawDataSet = packedRawDataSet, ktfid = koreanTfidfVectorizer, batchSize = batchSize)
 
-    var network = KoreanNeuralNetwork.buildVariationalAutoEncoder(koreanTfidfVectorizer.nIn())
+    var network = KoreanNeuralNetwork.buildVariationalAutoEncoder_(koreanTfidfVectorizer.nIn())
     network.init()
 
 
