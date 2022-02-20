@@ -2,25 +2,40 @@ package dev.isteam.chatbot.dl.api.vector
 
 import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.RawDataSet
+import dev.isteam.chatbot.dl.api.preprocessor.MeanEmbeddingVectorizer
+import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
+import org.deeplearning4j.models.word2vec.Word2Vec
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.MultiDataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.linalg.util.FeatureUtil
 
-class DataSource(
+class Word2VecDataSource(
     private val packedRawDataSet: PackedRawDataSet,
-    private val ktfid: KoreanTfidfVectorizer,
+    private val word2Vec: Word2Vec,
+    private val koreanTfidfVectorizer: KoreanTfidfVectorizer,
+    private val koreanTokenizerFactory: KoreanTokenizerFactory,
+    private val meanEmbeddingVectorizer: MeanEmbeddingVectorizer = MeanEmbeddingVectorizer(
+        koreanTfidfVectorizer,
+        word2Vec
+    ),
     private val batchSize: Int = 100,
+    private var dataCount: Int = 0,
     private var preProcessor: DataSetPreProcessor? = null,
     private var iterator: ListIterator<RawDataSet> = packedRawDataSet.rawDataSets.listIterator(),
     private val labels: MutableList<String> = IntRange(
         0,
         packedRawDataSet.rawDataSets.size - 1
     ).map { it.toString() }.toMutableList(),
+    private val timeSeries: Int = packedRawDataSet.rawDataSets.size,
 
-    var currentIndex: Int = 0,
+    var currentCount: Long = 0
 ) : DataSetIterator {
+
+
+
     /**
      * Removes from the underlying collection the last element returned by this iterator.
      */
@@ -43,11 +58,7 @@ class DataSource(
      * @return the next data applyTransformToDestination
      */
     override fun next(num: Int): DataSet {
-        var rawDatSet = iterator.next()
-        var idx = packedRawDataSet.rawDataSets.indexOf(rawDatSet)
-
-        //var compressed = autoEncoder.activateSelectedLayers(0,1,rawFeatures)
-        return ktfid.vectorize(rawDatSet.question, idx.toString())
+        return nextDataSet(num)
     }
 
     private fun mdsToDataSet(mds: MultiDataSet): DataSet {
@@ -75,39 +86,44 @@ class DataSource(
      * Returns the next element in the iteration.
      */
     override fun next(): DataSet {
-        return nextDataSet(batchSize)
+        return next(batchSize)
     }
 
 
     private fun nextDataSet(numExamples: Int): DataSet {
-        var features = Nd4j.create(numExamples, inputColumns(), packedRawDataSet.rawDataSets.size)
-        var labelVector = Nd4j.create(numExamples, inputColumns(), packedRawDataSet.rawDataSets.size)
-        var dataCount = 0
+        var features = Nd4j.create(numExamples, inputColumns(), timeSeries)
+        var labelsVector = Nd4j.create(numExamples, inputColumns(), timeSeries)
+        dataCount = 0
         for (i in 0 until numExamples) {
             if (!hasNext())
                 break
 
-            currentIndex = iterator.nextIndex()
+            var index = iterator.nextIndex()
+            var rawDatSet = iterator.next()
 
-            var rawDataSet = iterator.next()
-            var rawFeatures = ktfid.transform(rawDataSet.question).toDoubleVector()
+            var tokenizer = koreanTokenizerFactory.create(rawDatSet.question)
 
-            for (j in rawFeatures.indices) {
-                features.putScalar(intArrayOf(i, j, dataCount), rawFeatures[j])
-            }
-            if (!hasNext())
-                break
+            var tokens = tokenizer.tokens
 
-            currentIndex = iterator.nextIndex()
+            var featureVector = meanEmbeddingVectorizer.transform(tokens).toDoubleVector()
 
-            var nextDataSet = iterator.next()
-            var nextFeatures = ktfid.transform(nextDataSet.question).toDoubleVector()
-            for (j in nextFeatures.indices) {
-                labelVector.putScalar(intArrayOf(i, j, dataCount), rawFeatures[j])
-            }
+            for (j in featureVector.indices)
+                features.putScalar(intArrayOf(i, j, dataCount), featureVector[j])
+
+
+            var labelVector =
+                FeatureUtil.toOutcomeVector(labels.indexOf(index.toString()).toLong(), labels.size.toLong())
+                    .toIntVector()
+
+            println("${dataCount},${i}")
+            for (j in labelVector.indices)
+                labelsVector.putScalar(intArrayOf(i, j, dataCount), labelVector[j])
+
+            currentCount++
             dataCount++
         }
-        return DataSet(features, labelVector)
+
+        return DataSet(features, labelsVector)
     }
 
     /**
@@ -116,7 +132,7 @@ class DataSource(
      * @return
      */
     override fun inputColumns(): Int {
-        return ktfid.nIn()
+        return word2Vec.layerSize
     }
 
     /**
@@ -159,6 +175,7 @@ class DataSource(
      * Resets the iterator back to the beginning
      */
     override fun reset() {
+        dataCount = 0
         iterator = packedRawDataSet.rawDataSets.listIterator()
     }
 

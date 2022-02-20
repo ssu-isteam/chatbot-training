@@ -112,6 +112,7 @@ object KoreanNeuralNetwork {
     }
 
     fun buildVariationalAutoEncoder(inputSize: Int): MultiLayerNetwork {
+
         val unit = 7
         var modelConf = NeuralNetConfiguration.Builder()
             .seed(12356)
@@ -140,13 +141,14 @@ object KoreanNeuralNetwork {
 
         return MultiLayerNetwork(modelConf.build())
     }
+
     fun buildVariationalAutoEncoder_(inputSize: Int): MultiLayerNetwork {
         var modelConf = NeuralNetConfiguration.Builder()
             .seed(12356)
             .updater(RmsProp(1e-2))
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .list()
-        var layerSizes = intArrayOf( 1024, 512, 256, 128)
+        var layerSizes = intArrayOf(1024, 512, 256, 128)
         var vae = VariationalAutoencoder.Builder()
             .nIn(inputSize).nOut(layerSizes.last())
             .encoderLayerSizes(*layerSizes)

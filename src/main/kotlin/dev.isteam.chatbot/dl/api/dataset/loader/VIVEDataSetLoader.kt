@@ -3,7 +3,6 @@ package dev.isteam.chatbot.dl.api.dataset.loader
 import dev.isteam.chatbot.dl.api.dataset.DataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.RawDataSet
-import me.tongfei.progressbar.ProgressBar
 import me.tongfei.progressbar.ProgressBarBuilder
 import me.tongfei.progressbar.ProgressBarStyle
 import org.json.JSONObject
@@ -11,9 +10,9 @@ import java.io.FileInputStream
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 
-class VIVEDataSetLoader(private val paths:Array<String>) : DataSetLoader{
+class VIVEDataSetLoader(private val paths: Array<String>) : DataSetLoader {
     override fun load(): CompletableFuture<PackedRawDataSet> {
-        return CompletableFuture.supplyAsync{
+        return CompletableFuture.supplyAsync {
             var pb = ProgressBarBuilder().setTaskName("Reading files")
                 .setInitialMax(paths.size.toLong())
                 .setStyle(ProgressBarStyle.ASCII)
@@ -24,13 +23,13 @@ class VIVEDataSetLoader(private val paths:Array<String>) : DataSetLoader{
             for (path in paths) {
                 var dataSets = load(path)
                 pb.step()
-                packedRawDataSet.rawDataSets.addAll(dataSets)
+                (packedRawDataSet.rawDataSets as ArrayList).addAll(dataSets)
             }
             return@supplyAsync packedRawDataSet
         }
     }
 
-    private fun load(path:String) : List<RawDataSet>{
+    private fun load(path: String): List<RawDataSet> {
         var dataSets = arrayListOf<RawDataSet>()
 
         val rawText = FileInputStream(path).reader(charset = Charsets.UTF_8).readText()
@@ -39,15 +38,15 @@ class VIVEDataSetLoader(private val paths:Array<String>) : DataSetLoader{
 
         var dataArray = obj.getJSONArray("data")
 
-        for(i in 0 until dataArray.length()){
+        for (i in 0 until dataArray.length()) {
             var ctx = dataArray.getJSONObject(i)
             var body = ctx.getJSONObject("body")
             var dialogues = body.getJSONArray("dialogue")
 
-            for(j in 0 until dialogues.length()){
+            for (j in 0 until dialogues.length()) {
                 var dialogue = dialogues.getJSONObject(j)
                 var utterance = dialogue.getString("utterance")
-                var dataSet = RawDataSet(question = utterance, answer =utterance)
+                var dataSet = RawDataSet(question = utterance, answer = utterance)
                 dataSets.add(dataSet)
 
             }

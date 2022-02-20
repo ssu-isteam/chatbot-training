@@ -8,17 +8,18 @@ import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import org.nd4j.linalg.factory.Nd4j
 
-class AutoencoderDataSource(private val packedRawDataSet: PackedRawDataSet,
-private val ktfid: KoreanTfidfVectorizer,
-private val batchSize: Int = 100,
-private var preProcessor: DataSetPreProcessor? = null,
-private var iterator: Iterator<RawDataSet> = packedRawDataSet.rawDataSets.iterator(),
-private val labels: MutableList<String> = IntRange(
-    0,
-    packedRawDataSet.rawDataSets.size - 1
-).map { it.toString() }.toMutableList(),
+class AutoencoderDataSource(
+    private val packedRawDataSet: PackedRawDataSet,
+    private val ktfid: KoreanTfidfVectorizer,
+    private val batchSize: Int = 100,
+    private var preProcessor: DataSetPreProcessor? = null,
+    private var iterator: Iterator<RawDataSet> = packedRawDataSet.rawDataSets.iterator(),
+    private val labels: MutableList<String> = IntRange(
+        0,
+        packedRawDataSet.rawDataSets.size - 1
+    ).map { it.toString() }.toMutableList(),
 
-var  currentCount:Long = 0,
+    var currentCount: Long = 0,
 ) : DataSetIterator {
     /**
      * Removes from the underlying collection the last element returned by this iterator.
@@ -44,15 +45,15 @@ var  currentCount:Long = 0,
     override fun next(num: Int): DataSet {
         currentCount = 0
         var features = Nd4j.zeros(num, inputColumns())
-        for(i in 0 until num){
-            if(!hasNext())
+        for (i in 0 until num) {
+            if (!hasNext())
                 break
             var rawDataSet = iterator.next()
             var f = ktfid.transform(rawDataSet.question)
-            features.putRow(i.toLong(),f);
-            currentCount++;
+            features.putRow(i.toLong(), f)
+            currentCount++
         }
-        return DataSet(features,null)
+        return DataSet(features, null)
     }
 
     private fun mdsToDataSet(mds: MultiDataSet): DataSet {
@@ -85,8 +86,8 @@ var  currentCount:Long = 0,
 
 
     private fun nextDataSet(numExamples: Int): DataSet {
-        var features = Nd4j.create(numExamples, inputColumns(),packedRawDataSet.rawDataSets.size)
-        var labelVector = Nd4j.create(numExamples, inputColumns(),packedRawDataSet.rawDataSets.size)
+        var features = Nd4j.create(numExamples, inputColumns(), packedRawDataSet.rawDataSets.size)
+        var labelVector = Nd4j.create(numExamples, inputColumns(), packedRawDataSet.rawDataSets.size)
         var dataCount = 0
         for (i in 0 until numExamples) {
             if (!hasNext())
@@ -94,16 +95,16 @@ var  currentCount:Long = 0,
             var rawDataSet = iterator.next()
             var rawFeatures = ktfid.transform(rawDataSet.question).toDoubleVector()
 
-            for (j in rawFeatures.indices){
-                features.putScalar(intArrayOf(i,j,dataCount), rawFeatures[j])
+            for (j in rawFeatures.indices) {
+                features.putScalar(intArrayOf(i, j, dataCount), rawFeatures[j])
             }
-            if(!hasNext())
+            if (!hasNext())
                 break
 
             var nextDataSet = iterator.next()
             var nextFeatures = ktfid.transform(nextDataSet.question).toDoubleVector()
-            for (j in nextFeatures.indices){
-                labelVector.putScalar(intArrayOf(i,j,dataCount), rawFeatures[j])
+            for (j in nextFeatures.indices) {
+                labelVector.putScalar(intArrayOf(i, j, dataCount), rawFeatures[j])
             }
             dataCount++
         }

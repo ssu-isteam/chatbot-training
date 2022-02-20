@@ -16,8 +16,6 @@ import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.util.FeatureUtil
 import java.io.File
 import java.io.InputStream
-import java.math.BigDecimal
-import java.math.BigInteger
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicLong
 
@@ -38,7 +36,7 @@ class KoreanTfidfVectorizer(
             it.toString()
         }.toMutableList()
     ),
-    private val maxTokenSize:Int = 50,
+    private val maxTokenSize: Int = 50,
 ) : BaseTextVectorizer() {
     init {
         tokenizerFactory = koreanTokenizerFactory
@@ -77,8 +75,11 @@ class KoreanTfidfVectorizer(
     }
 
 
-    fun vectorize(input:INDArray, label: String) : DataSet{
-        return DataSet(input, FeatureUtil.toOutcomeVector(labelsSource.indexOf(label).toLong(),labelsSource.size().toLong()))
+    fun vectorize(input: INDArray, label: String): DataSet {
+        return DataSet(
+            input,
+            FeatureUtil.toOutcomeVector(labelsSource.indexOf(label).toLong(), labelsSource.size().toLong())
+        )
     }
 
     /**
@@ -139,14 +140,24 @@ class KoreanTfidfVectorizer(
         return ret
     }
 
-    private fun transform(idx:Long, fromStart:Long, fromEnd:Long, toStart:Long, toEnd:Long) : Long{
+    fun tfidf(tokens: List<String>, token: String): Double {
+        val counts: MutableMap<String, AtomicLong> = HashMap()
+        for (token in tokens) {
+            if (!counts.containsKey(token)) counts[token] = AtomicLong(0)
+            counts[token]!!.incrementAndGet()
+        }
+        return tfidfWord(token, counts[token]!!.toLong(), tokens.size.toLong())
+    }
+
+    private fun transform(idx: Long, fromStart: Long, fromEnd: Long, toStart: Long, toEnd: Long): Long {
 
         return (idx - fromStart) / (fromEnd - fromStart) * (toEnd - toStart) + toStart
     }
 
-    fun nIn() : Int{
+    fun nIn(): Int {
         return vocabCache.numWords()
     }
+
     fun tfidfWord(word: String, wordCount: Long, documentLength: Long): Double {
         return MathUtils.tfidf(tfForWord(wordCount, documentLength), idfForWord(word))
     }
