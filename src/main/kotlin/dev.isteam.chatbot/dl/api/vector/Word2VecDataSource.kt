@@ -6,12 +6,14 @@ import dev.isteam.chatbot.dl.api.preprocessor.MeanEmbeddingVectorizer
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
 import logger
 import org.deeplearning4j.models.word2vec.Word2Vec
+import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.MultiDataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.util.FeatureUtil
+import kotlin.math.log
 
 
 class Word2VecDataSource(
@@ -115,12 +117,11 @@ class Word2VecDataSource(
 
 
             var labelVector =
-                FeatureUtil.toOutcomeVector(labels.indexOf(index.toString()).toLong(), labels.size.toLong())
+                toOutcomeVector(index, labels.size)
                     .toIntVector()
 
             for (j in labelVector.indices)
                 labelsVector.putScalar(intArrayOf(i, j, dataCount), labelVector[j])
-
             currentCount++
             dataCount++
         }
@@ -216,5 +217,7 @@ class Word2VecDataSource(
         return labels
     }
 
-
+    private fun toOutcomeVector(idx:Int, size:Int) : INDArray{
+        return Nd4j.zeros(1,size).also { it.putScalar(idx.toLong(),1) }
+    }
 }

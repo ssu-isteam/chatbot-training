@@ -4,6 +4,8 @@ import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.BackpropType
 import org.deeplearning4j.nn.conf.GradientNormalization
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
+import org.deeplearning4j.nn.conf.distribution.ConstantDistribution
+import org.deeplearning4j.nn.conf.distribution.Distribution
 import org.deeplearning4j.nn.conf.layers.DenseLayer
 import org.deeplearning4j.nn.conf.layers.LSTM
 import org.deeplearning4j.nn.conf.layers.OutputLayer
@@ -19,7 +21,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 import kotlin.math.pow
 
 object KoreanNeuralNetwork {
-    const val LSTM_LAYERSIZE = 200
+    const val LSTM_LAYERSIZE = 100
     const val TBTT_SIZE = 50
 
     fun buildLogisticRegression(inputSize: Int, outputSize: Int): MultiLayerNetwork {
@@ -166,7 +168,7 @@ object KoreanNeuralNetwork {
 
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
         var conf = NeuralNetConfiguration.Builder()
-            .updater(Adam(0.1))
+            .updater(Adam(1e-3))
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
             .dropOut(0.8)
@@ -176,16 +178,17 @@ object KoreanNeuralNetwork {
                 0, LSTM.Builder()
 
                     .nIn(inputSize).nOut(LSTM_LAYERSIZE)
-                    .activation(Activation.TANH)
+                    .activation(Activation.RELU)
                     .build()
             )
             .layer(
                 1, LSTM.Builder()
                     .nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE)
-                    .activation(Activation.TANH)
+                    .activation(Activation.RELU)
                     .build()
             ).layer(
-                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY)
+                    .weightInit(ConstantDistribution(1e-1))
                     .nIn(LSTM_LAYERSIZE).activation(Activation.SOFTMAX).nOut(outputSize).build()
             )
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)

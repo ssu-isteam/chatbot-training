@@ -14,6 +14,7 @@ import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.evaluation.classification.Evaluation
+import org.nd4j.evaluation.classification.ROC
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -24,7 +25,7 @@ import java.time.temporal.ChronoUnit
 val logger: Logger = LoggerFactory.getLogger("Main")
 
 fun main2(args: Array<String>) {
-    val motherPath = ""
+    val motherPath = "D:\\ISTEAM\\AI 데이터 셋\\한국어 대화 요약\\Training\\[라벨]한국어대화요약_train"
     val files =
         arrayOf("개인및관계.json"/*"미용과건강.json","상거래(쇼핑).json","시사교육.json","식음료.json","여가생활.json","일과직업.json","주거와생활.json","행사.json"*/)
 
@@ -70,7 +71,7 @@ fun main2(args: Array<String>) {
     vec.fit()
 
 
-    val epoch = 100
+    val epoch = 50
 
 
     var dataSource = Word2VecDataSource(packedRawDataSet = packedRawDataSet, word2Vec = vec, koreanTfidfVectorizer = koreanTfidfVectorizer, koreanTokenizerFactory = tokenizerFactory, batchSize = batchSize)
@@ -92,6 +93,7 @@ fun main2(args: Array<String>) {
             while (dataSource.hasNext()) {
                 var data = dataSource.next()
                 network.fit(data.features, data.labels)
+                logger.info("score ${network.score()}")
          //       stepBy(dataSource.currentCount)
             }
             logger.info("${(i/ epoch.toDouble()) * 100}%")
@@ -106,7 +108,7 @@ fun main2(args: Array<String>) {
         var data = dataSource.next()
         var output = network.output(data.features)
         //  logger.info("eval: predicted: $output , real: ${data.features}")
-        eval.eval(data.labels, output)
+        eval.eval(data.labels,output)
     }
     WordVectorSerializer.writeVocabCache(koreanTfidfVectorizer.vocabCache,File("vocab.cache"))
     ModelSerializer.writeModel(network,"network.model",true)
