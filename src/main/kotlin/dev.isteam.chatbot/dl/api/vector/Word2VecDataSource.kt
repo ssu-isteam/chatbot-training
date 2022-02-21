@@ -96,7 +96,7 @@ class Word2VecDataSource(
         var features = Nd4j.create(numExamples, inputColumns(), timeSeries)
         var labelsVector = Nd4j.create(numExamples, labels.size, timeSeries)
         dataCount = 0
-        logger.info("${numExamples},${inputColumns()},${timeSeries}")
+      //  logger.info("${numExamples},${inputColumns()},${timeSeries}")
         for (i in 0 until numExamples) {
             if (!hasNext())
                 break
