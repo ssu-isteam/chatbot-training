@@ -4,6 +4,7 @@ import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.RawDataSet
 import dev.isteam.chatbot.dl.api.preprocessor.MeanEmbeddingVectorizer
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
+import logger
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.MultiDataSet
@@ -11,6 +12,7 @@ import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.util.FeatureUtil
+
 
 class Word2VecDataSource(
     private val packedRawDataSet: PackedRawDataSet,
@@ -92,8 +94,9 @@ class Word2VecDataSource(
 
     private fun nextDataSet(numExamples: Int): DataSet {
         var features = Nd4j.create(numExamples, inputColumns(), timeSeries)
-        var labelsVector = Nd4j.create(numExamples, inputColumns(), timeSeries)
+        var labelsVector = Nd4j.create(numExamples, labels.size, timeSeries)
         dataCount = 0
+        logger.info("${numExamples},${inputColumns()},${timeSeries}")
         for (i in 0 until numExamples) {
             if (!hasNext())
                 break
@@ -115,7 +118,6 @@ class Word2VecDataSource(
                 FeatureUtil.toOutcomeVector(labels.indexOf(index.toString()).toLong(), labels.size.toLong())
                     .toIntVector()
 
-            println("${dataCount},${i}")
             for (j in labelVector.indices)
                 labelsVector.putScalar(intArrayOf(i, j, dataCount), labelVector[j])
 

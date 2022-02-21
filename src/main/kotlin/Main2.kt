@@ -14,13 +14,14 @@ import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.evaluation.classification.Evaluation
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Paths
 import java.time.temporal.ChronoUnit
 
 
-val logger = LoggerFactory.getLogger("Main")
+val logger: Logger = LoggerFactory.getLogger("Main")
 
 fun main2(args: Array<String>) {
     val motherPath = "D:\\ISTEAM\\AI 데이터 셋\\한국어 대화 요약\\Training\\[라벨]한국어대화요약_train"
@@ -33,6 +34,7 @@ fun main2(args: Array<String>) {
 
     var packedRawDataSet = viveDataSetLoader.load().get()
 
+    packedRawDataSet.rawDataSets = packedRawDataSet.rawDataSets.subList(0,500)
     packedRawDataSet.rawDataSets = filter(packedRawDataSet,true)
 
     logger.info("Reading files completed. Total count: ${packedRawDataSet.rawDataSets.size}")
@@ -41,7 +43,7 @@ fun main2(args: Array<String>) {
     var tokenizerFactory = KoreanTokenizerFactory()
     tokenizerFactory.tokenPreProcessor = KoreanTokenPreprocessor()
 
-    var batchSize = 5000
+    var batchSize = 100
 
     logger.info("Starting fitting tfidf vectorizer....")
 
@@ -56,8 +58,8 @@ fun main2(args: Array<String>) {
         .minWordFrequency(5)
         .iterations(1)
         .epochs(1)
-        .layerSize(100)
-        .batchSize(100000)
+        .layerSize(50)
+        .batchSize(10000)
         .seed(42)
         .windowSize(5)
         .iterate(rawDataSetIterator)
@@ -75,7 +77,7 @@ fun main2(args: Array<String>) {
 
     logger.info("Initializing network...")
 
-    var network = KoreanNeuralNetwork.buildNeuralNetworkLSTM(packedRawDataSet.rawDataSets.size / 2, packedRawDataSet.rawDataSets.size / 2)
+    var network = KoreanNeuralNetwork.buildNeuralNetworkLSTM(vec.layerSize, packedRawDataSet.rawDataSets.size)
     network.init()
 
 
@@ -90,7 +92,7 @@ fun main2(args: Array<String>) {
             while (dataSource.hasNext()) {
                 var data = dataSource.next()
                 network.fit(data.features, data.labels)
-                stepBy(dataSource.currentCount)
+         //       stepBy(dataSource.currentCount)
             }
             logger.info("${(i/ epoch.toDouble()) * 100}%")
             dataSource.reset()

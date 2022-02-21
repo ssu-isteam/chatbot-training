@@ -12,7 +12,6 @@ import java.io.File
 import java.nio.file.Paths
 
 fun main(args: Array<String>) {
-
     main2(args)
     return
     val motherPath = "C:\\Users\\Singlerr\\Desktop\\ISTEAM\\AI 데이터 셋\\한국어 대화 요약\\Training\\[라벨]한국어대화요약_train"
