@@ -1,5 +1,6 @@
 package dev.isteam.chatbot.dl.api.vector
 
+import dev.isteam.chatbot.dl.api.dataset.LSTMPackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.RawDataSet
 import dev.isteam.chatbot.dl.api.preprocessor.MeanEmbeddingVectorizer
@@ -17,7 +18,7 @@ import kotlin.math.log
 
 
 class Word2VecDataSource(
-    private val packedRawDataSet: PackedRawDataSet,
+    private val packedRawDataSet: LSTMPackedRawDataSet,
     private val word2Vec: Word2Vec,
     private val koreanTfidfVectorizer: KoreanTfidfVectorizer,
     private val koreanTokenizerFactory: KoreanTokenizerFactory,
@@ -28,12 +29,12 @@ class Word2VecDataSource(
     private val batchSize: Int = 100,
     private var dataCount: Int = 0,
     private var preProcessor: DataSetPreProcessor? = null,
-    private var iterator: ListIterator<RawDataSet> = packedRawDataSet.rawDataSets.listIterator(),
+    private var iterator: ListIterator<PackedRawDataSet> = packedRawDataSet.dialogues.listIterator(),
     private val labels: MutableList<String> = IntRange(
         0,
         packedRawDataSet.rawDataSets.size - 1
     ).map { it.toString() }.toMutableList(),
-    private val timeSeries: Int = packedRawDataSet.rawDataSets.size,
+    private val timeSeries: Int = packedRawDataSet.max,
 
     var currentCount: Long = 0
 ) : DataSetIterator {
@@ -96,34 +97,32 @@ class Word2VecDataSource(
 
     private fun nextDataSet(numExamples: Int): DataSet {
         var features = Nd4j.create(numExamples, inputColumns(), timeSeries)
-        var labelsVector = Nd4j.create(numExamples, labels.size, timeSeries)
-        dataCount = 0
-      //  logger.info("${numExamples},${inputColumns()},${timeSeries}")
+        var labelsVector = Nd4j.create(numExamples, timeSeries, timeSeries)
         for (i in 0 until numExamples) {
             if (!hasNext())
                 break
-
+            dataCount = 0
             var index = iterator.nextIndex()
-            var rawDatSet = iterator.next()
-
-            var tokenizer = koreanTokenizerFactory.create(rawDatSet.question)
-
-            var tokens = tokenizer.tokens
-
-            var featureVector = meanEmbeddingVectorizer.transform(tokens).toDoubleVector()
-
-            for (j in featureVector.indices)
-                features.putScalar(intArrayOf(i, j, dataCount), featureVector[j])
+            var nextDialogue = iterator.next()
 
 
-            var labelVector =
-                toOutcomeVector(index, labels.size)
-                    .toIntVector()
+            nextDialogue.rawDataSets.forEachIndexed{ index, dataSet ->
+                var tokenizer = koreanTokenizerFactory.create(dataSet.question)
+                var tokens = tokenizer.tokens
+                var featureVector = meanEmbeddingVectorizer.transform(tokens).toDoubleVector()
+                for (j in featureVector.indices)
+                    features.putScalar(intArrayOf(i, j, dataCount), featureVector[j])
 
-            for (j in labelVector.indices)
-                labelsVector.putScalar(intArrayOf(i, j, dataCount), labelVector[j])
-            currentCount++
-            dataCount++
+
+                var labelVector =
+                    toOutcomeVector(index, nextDialogue.rawDataSets.size)
+                        .toIntVector()
+
+                for (j in labelVector.indices)
+                    labelsVector.putScalar(intArrayOf(i, j, dataCount), labelVector[j])
+                dataCount++
+            }
+
         }
 
         return DataSet(features, labelsVector)
@@ -179,7 +178,7 @@ class Word2VecDataSource(
      */
     override fun reset() {
         dataCount = 0
-        iterator = packedRawDataSet.rawDataSets.listIterator()
+        iterator = packedRawDataSet.dialogues.listIterator()
     }
 
     /**

@@ -178,13 +178,13 @@ object KoreanNeuralNetwork {
                 0, LSTM.Builder()
 
                     .nIn(inputSize).nOut(LSTM_LAYERSIZE)
-                    .activation(Activation.RELU)
+                    .activation(Activation.TANH)
                     .build()
             )
             .layer(
                 1, LSTM.Builder()
                     .nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE)
-                    .activation(Activation.RELU)
+                    .activation(Activation.TANH)
                     .build()
             ).layer(
                 2, RnnOutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY)

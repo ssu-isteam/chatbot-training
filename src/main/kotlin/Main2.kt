@@ -61,6 +61,7 @@ fun main2(args: Array<String>) {
         .epochs(1)
         .layerSize(50)
         .batchSize(10000)
+        .workers(10)
         .seed(42)
         .windowSize(5)
         .iterate(rawDataSetIterator)
