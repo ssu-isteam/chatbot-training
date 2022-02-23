@@ -110,12 +110,13 @@ class Word2VecDataSource(
                 var tokenizer = koreanTokenizerFactory.create(dataSet.question)
                 var tokens = tokenizer.tokens
                 var featureVector = meanEmbeddingVectorizer.transform(tokens).toDoubleVector()
+                logger.info("$i,$dataCount")
                 for (j in featureVector.indices)
-                    features.putScalar(intArrayOf(i, j, dataCount), featureVector[j])
+                    features.putScalar(intArrayOf(i, if(j >= 50) 49 else j, dataCount), featureVector[j])
 
 
                 var labelVector =
-                    toOutcomeVector(index, nextDialogue.rawDataSets.size)
+                    toOutcomeVector(index,timeSeries)
                         .toIntVector()
 
                 for (j in labelVector.indices)

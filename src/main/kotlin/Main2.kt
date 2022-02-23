@@ -33,18 +33,18 @@ fun main2(args: Array<String>) {
 
     var viveDataSetLoader = VIVEDataSetLoader(files.map { Paths.get(motherPath, it).toString() }.toTypedArray())
 
-    var packedRawDataSet = viveDataSetLoader.load().get()
+    var packedRawDataSet = viveDataSetLoader.loadDialogues().get()[0]
 
-    packedRawDataSet.rawDataSets = packedRawDataSet.rawDataSets.subList(0,500)
-    packedRawDataSet.rawDataSets = filter(packedRawDataSet,true)
+    //packedRawDataSet.rawDataSets = packedRawDataSet.rawDataSets.subList(0,500)
+   // packedRawDataSet.rawDataSets = filter(packedRawDataSet,true)
 
-    logger.info("Reading files completed. Total count: ${packedRawDataSet.rawDataSets.size}")
+    logger.info("Reading files completed. Total count: ${packedRawDataSet.dialogues.size}")
 
 
     var tokenizerFactory = KoreanTokenizerFactory()
     tokenizerFactory.tokenPreProcessor = KoreanTokenPreprocessor()
 
-    var batchSize = 100
+    var batchSize = 5000
 
     logger.info("Starting fitting tfidf vectorizer....")
 
@@ -79,7 +79,7 @@ fun main2(args: Array<String>) {
 
     logger.info("Initializing network...")
 
-    var network = KoreanNeuralNetwork.buildNeuralNetworkLSTM(vec.layerSize, packedRawDataSet.rawDataSets.size)
+    var network = KoreanNeuralNetwork.buildNeuralNetworkLSTM(vec.layerSize, packedRawDataSet.max)
     network.init()
 
 
@@ -103,7 +103,7 @@ fun main2(args: Array<String>) {
     }
 
 
-    var eval = Evaluation(packedRawDataSet.rawDataSets.size)
+    var eval = Evaluation(packedRawDataSet.max)
 
     while (dataSource.hasNext()) {
         var data = dataSource.next()
