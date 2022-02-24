@@ -72,7 +72,7 @@ fun main2(args: Array<String>) {
     vec.fit()
 
 
-    val epoch = 50
+    val epoch = 10
 
 
     var dataSource = Word2VecDataSource(packedRawDataSet = packedRawDataSet, word2Vec = vec, koreanTfidfVectorizer = koreanTfidfVectorizer, koreanTokenizerFactory = tokenizerFactory, batchSize = batchSize)
@@ -94,9 +94,10 @@ fun main2(args: Array<String>) {
             while (dataSource.hasNext()) {
                 var data = dataSource.next()
                 network.fit(data.features, data.labels)
-                logger.info("score ${network.score()}")
+
          //       stepBy(dataSource.currentCount)
             }
+            logger.info("score ${network.score()}")
             logger.info("${(i/ epoch.toDouble()) * 100}%")
             dataSource.reset()
         }
@@ -112,6 +113,7 @@ fun main2(args: Array<String>) {
         eval.eval(data.labels,output)
     }
     WordVectorSerializer.writeVocabCache(koreanTfidfVectorizer.vocabCache,File("vocab.cache"))
+    WordVectorSerializer.writeWord2VecModel(vec,"model.w2v")
     ModelSerializer.writeModel(network,"network.model",true)
     logger.info(eval.stats())
 }
