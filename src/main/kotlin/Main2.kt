@@ -25,7 +25,7 @@ import java.time.temporal.ChronoUnit
 val logger: Logger = LoggerFactory.getLogger("Main")
 
 fun main2(args: Array<String>) {
-    val motherPath = ""
+    val motherPath = "D:\\ISTEAM\\AI 데이터 셋\\한국어 대화 요약\\Training\\[라벨]한국어대화요약_train"
     val files =
         arrayOf("개인및관계.json"/*"미용과건강.json","상거래(쇼핑).json","시사교육.json","식음료.json","여가생활.json","일과직업.json","주거와생활.json","행사.json"*/)
 
@@ -35,7 +35,8 @@ fun main2(args: Array<String>) {
 
     var packedRawDataSet = viveDataSetLoader.loadDialogues().get()[0]
 
-    //packedRawDataSet.rawDataSets = packedRawDataSet.rawDataSets.subList(0,500)
+  //  packedRawDataSet.dialogues = packedRawDataSet.dialogues.subList(0, 100)
+ //   packedRawDataSet.rawDataSets = packedRawDataSet.dialogues.map { it.rawDataSets }.flatten().toMutableList()
    // packedRawDataSet.rawDataSets = filter(packedRawDataSet,true)
 
     logger.info("Reading files completed. Total count: ${packedRawDataSet.dialogues.size}")
@@ -79,7 +80,7 @@ fun main2(args: Array<String>) {
 
     logger.info("Initializing network...")
 
-    var network = KoreanNeuralNetwork.buildNeuralNetworkLSTM(vec.layerSize, packedRawDataSet.max)
+    var network = KoreanNeuralNetwork.buildNeuralNetworkLSTM(vec.layerSize, packedRawDataSet.max + 1)
     network.init()
 
 

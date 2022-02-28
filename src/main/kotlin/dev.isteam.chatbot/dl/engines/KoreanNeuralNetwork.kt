@@ -189,7 +189,7 @@ object KoreanNeuralNetwork {
             ).layer(
                 2, RnnOutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY)
                     .weightInit(ConstantDistribution(1e-1))
-                    .nIn(LSTM_LAYERSIZE).activation(Activation.SOFTMAX).nOut(outputSize).build()
+                    .nIn(LSTM_LAYERSIZE).activation(Activation.RELU).nOut(outputSize).build()
             )
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
             .build()

@@ -15,6 +15,8 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.util.FeatureUtil
 import kotlin.math.log
+import kotlin.math.log10
+import kotlin.math.pow
 
 
 class Word2VecDataSource(
@@ -36,7 +38,7 @@ class Word2VecDataSource(
     ).map { it.toString() }.toMutableList(),
     private val timeSeries: Int = packedRawDataSet.max,
 
-    var currentCount: Long = 0
+    private val parentExp:Double = 10.0.pow(log10(packedRawDataSet.dialogues.size.toDouble()) + 1)
 ) : DataSetIterator {
 
 
@@ -96,13 +98,15 @@ class Word2VecDataSource(
 
 
     private fun nextDataSet(numExamples: Int): DataSet {
+
         var features = Nd4j.create(numExamples, inputColumns(), timeSeries)
-        var labelsVector = Nd4j.create(numExamples, timeSeries, timeSeries)
+        //Last cell is for dialogue index
+        var labelsVector = Nd4j.create(numExamples, timeSeries + 1, timeSeries)
         for (i in 0 until numExamples) {
             if (!hasNext())
                 break
             dataCount = 0
-            var index = iterator.nextIndex()
+            var dialogueIdx = iterator.nextIndex()
             var nextDialogue = iterator.next()
 
 
@@ -121,6 +125,9 @@ class Word2VecDataSource(
 
                 for (j in labelVector.indices)
                     labelsVector.putScalar(intArrayOf(i, j, dataCount), labelVector[j])
+
+
+                labelsVector.putScalar(intArrayOf(i,timeSeries,dataCount),dialogueIdx / parentExp)
                 dataCount++
             }
 
