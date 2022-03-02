@@ -52,14 +52,15 @@ fun main2(args: Array<String>) {
     var vocabCache = WordVectorSerializer.readVocabCache(File("vocab.cache"))
 
 
+
     var koreanTfidfVectorizer =
         KoreanTfidfVectorizer(packedRawDataSet = packedRawDataSet, koreanTokenizerFactory = tokenizerFactory, cache = vocabCache)
    // koreanTfidfVectorizer.fit()
 
 
-    //var rawDataSetIterator = RawDataSetIterator(packedRawDataSet,RawDataSetIterator.IterativeType.QUESTION)
+    var rawDataSetIterator = RawDataSetIterator(packedRawDataSet,RawDataSetIterator.IterativeType.QUESTION)
 
-    /*
+
     val vec: Word2Vec = Word2Vec.Builder()
         .minWordFrequency(5)
         .iterations(1)
@@ -76,8 +77,7 @@ fun main2(args: Array<String>) {
     logger.info("Starting fitting Word2Vec...")
     vec.fit()
 
-*/
-    var vec = WordVectorSerializer.readWord2VecModel("model.w2v")
+ //   var vec = WordVectorSerializer.readWord2VecModel("model.w2v")
     val epoch = 10
 
 
