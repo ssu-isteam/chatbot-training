@@ -15,6 +15,7 @@ import org.deeplearning4j.nn.conf.layers.variational.VariationalAutoencoder
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
+import org.nd4j.linalg.learning.config.AdaGrad
 import org.nd4j.linalg.learning.config.Adam
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.learning.config.RmsProp
@@ -169,7 +170,7 @@ object KoreanNeuralNetwork {
 
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
         var conf = NeuralNetConfiguration.Builder()
-            .updater(RmsProp(1e-2))
+            .updater(AdaGrad(1e-3))
             .activation(Activation.TANH)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
