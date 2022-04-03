@@ -19,6 +19,7 @@ import org.nd4j.linalg.learning.config.AdaGrad
 import org.nd4j.linalg.learning.config.Adam
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.learning.config.RmsProp
+import org.nd4j.linalg.learning.config.Sgd
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import kotlin.math.pow
 
@@ -168,7 +169,8 @@ object KoreanNeuralNetwork {
         return MultiLayerNetwork(modelConf.build())
     }
 
-    fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
+    fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork{
+        Sgd(1e-3)
         var conf = NeuralNetConfiguration.Builder()
             .updater(AdaGrad(1e-3))
             .activation(Activation.TANH)

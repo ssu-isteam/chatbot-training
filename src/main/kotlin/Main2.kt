@@ -3,6 +3,8 @@ import dev.isteam.chatbot.dl.api.dataset.iterator.CharacterIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
+import org.deeplearning4j.util.ModelSerializer
+import org.nd4j.evaluation.classification.Evaluation
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Paths
@@ -84,4 +86,6 @@ fun main2(args: Array<String>) {
     model.setListeners(listener)
     model.fit(iterator, epoch)
 
+    logger.info("Total score: ${model.score()}")
+    ModelSerializer.writeModel(model,"model.lstm",true)
 }
