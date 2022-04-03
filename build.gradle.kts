@@ -1,4 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 val dl4jVersion:String by project
 val nd4jVersion:String by project
@@ -50,9 +49,7 @@ group = "dev.isteam"
 version = "1.0-SNAPSHOT"
 description = rootProject.name
 java.sourceCompatibility = JavaVersion.VERSION_11
-tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "11"
-}
+
 tasks.withType<Jar>{
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest{

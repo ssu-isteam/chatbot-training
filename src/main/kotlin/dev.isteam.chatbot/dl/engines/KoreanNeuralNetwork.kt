@@ -1,5 +1,6 @@
 package dev.isteam.chatbot.dl.engines
 
+import org.bytedeco.opencv.opencv_core.SparseMat
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.BackpropType
 import org.deeplearning4j.nn.conf.GradientNormalization
@@ -21,7 +22,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 import kotlin.math.pow
 
 object KoreanNeuralNetwork {
-    const val LSTM_LAYERSIZE = 100
+    const val LSTM_LAYERSIZE = 128
     const val TBTT_SIZE = 50
 
     fun buildLogisticRegression(inputSize: Int, outputSize: Int): MultiLayerNetwork {
@@ -168,28 +169,23 @@ object KoreanNeuralNetwork {
 
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
         var conf = NeuralNetConfiguration.Builder()
-            .updater(Adam(1e-3))
+            .updater(RmsProp(1e-2))
+            .activation(Activation.TANH)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
-            .dropOut(0.8)
-            .weightInit(WeightInit.XAVIER)
             .list()
             .layer(
                 0, LSTM.Builder()
-
                     .nIn(inputSize).nOut(LSTM_LAYERSIZE)
-                    .activation(Activation.TANH)
                     .build()
             )
             .layer(
-                1, LSTM.Builder()
+                1, DenseLayer.Builder()
                     .nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE)
-                    .activation(Activation.TANH)
                     .build()
             ).layer(
                 2, RnnOutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY)
-                    .weightInit(ConstantDistribution(1e-1))
-                    .nIn(LSTM_LAYERSIZE).activation(Activation.RELU).nOut(outputSize).build()
+                    .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
             .build()
