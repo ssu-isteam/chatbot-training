@@ -71,7 +71,7 @@ fun main2(args: Array<String>) {
 
     val batchSize = 100
 
-    val epoch = 10
+    val epoch = 50
 
     val maxLen = 20
 

@@ -130,7 +130,7 @@ class CharacterIterator : DataSetIterator {
         fileCharacters = if (currIdx == characters.size) {
             characters
         } else {
-            Arrays.copyOfRange(characters, 0, currIdx)
+            characters.copyOfRange(0, currIdx)
         }
         require(exampleLength < fileCharacters.size) {
             ("exampleLength=" + exampleLength
@@ -216,7 +216,7 @@ class CharacterIterator : DataSetIterator {
         for (i in 0 until nMinibatchesPerEpoch) {
             exampleStartOffsets.add(i * exampleLength)
         }
-        Collections.shuffle(exampleStartOffsets, rng)
+        exampleStartOffsets.shuffle(rng)
     }
 
     override fun resetSupported(): Boolean {
