@@ -171,7 +171,7 @@ object KoreanNeuralNetwork {
 
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork{
         var conf = NeuralNetConfiguration.Builder()
-            .updater(Adam(1e-1))
+            .updater(Adam(1e-3))
             .activation(Activation.TANH)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
