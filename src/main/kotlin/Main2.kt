@@ -69,7 +69,7 @@ fun main2(args: Array<String>) {
     vec.fit()
 */
 
-    val batchSize = 100
+    val batchSize = 5000
 
     val epoch = 50
 
@@ -82,7 +82,7 @@ fun main2(args: Array<String>) {
 
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(iterator.inputColumns(), iterator.totalOutcomes())
 
-    var listener = ScoreIterationListener(10)
+    var listener = ScoreIterationListener(5000)
     model.setListeners(listener)
     model.fit(iterator, epoch)
 

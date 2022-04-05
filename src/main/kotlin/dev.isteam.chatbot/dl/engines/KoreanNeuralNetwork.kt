@@ -186,10 +186,9 @@ object KoreanNeuralNetwork {
                     .nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE)
                     .build()
             ).layer(
-                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.RECONSTRUCTION_CROSSENTROPY)
+                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
                     .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )
-            .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
             .build()
         return MultiLayerNetwork(conf)
     }
