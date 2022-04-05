@@ -2,8 +2,10 @@
 import dev.isteam.chatbot.dl.api.dataset.iterator.CharacterIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
+import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.optimize.api.InvocationType
 import org.deeplearning4j.optimize.listeners.EvaluativeListener
+import org.deeplearning4j.optimize.listeners.PerformanceListener
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.evaluation.classification.Evaluation
@@ -78,15 +80,12 @@ fun main2(args: Array<String>) {
     val maxLen = 20
 
     val sentences = packedRawDataSet.dialogues.flatMap { it.rawDataSets }.map { it.question!! }
-
     var iterator =
         CharacterIterator(sentences, batchSize, maxLen, CharacterIterator.defaultCharacterSet, SecureRandom())
-
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(iterator.inputColumns(), iterator.totalOutcomes())
-    var listener = EvaluativeListener(iterator,1,InvocationType.EPOCH_END)
+    var listener = PerformanceListener(1000)
     model.setListeners(listener)
     model.fit(iterator, epoch)
-
     logger.info("Total score: ${model.score()}")
     ModelSerializer.writeModel(model,"model.lstm",true)
 }
