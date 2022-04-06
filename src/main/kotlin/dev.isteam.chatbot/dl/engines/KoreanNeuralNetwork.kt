@@ -21,6 +21,7 @@ import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.learning.config.RmsProp
 import org.nd4j.linalg.learning.config.Sgd
 import org.nd4j.linalg.learning.regularization.L1Regularization
+import org.nd4j.linalg.learning.regularization.L2Regularization
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import kotlin.math.pow
 
@@ -178,6 +179,7 @@ object KoreanNeuralNetwork {
             .dropOut(0.8)
             .regularization(buildList {
                 add(L1Regularization(1e-2))
+                add(L2Regularization(1e-2))
             })
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
