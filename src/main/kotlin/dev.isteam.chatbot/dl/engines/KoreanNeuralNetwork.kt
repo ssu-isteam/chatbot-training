@@ -20,6 +20,7 @@ import org.nd4j.linalg.learning.config.Adam
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.learning.config.RmsProp
 import org.nd4j.linalg.learning.config.Sgd
+import org.nd4j.linalg.learning.regularization.L1Regularization
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import kotlin.math.pow
 
@@ -175,6 +176,9 @@ object KoreanNeuralNetwork {
             .activation(Activation.TANH)
             .weightInit(WeightInit.XAVIER)
             .dropOut(0.8)
+            .regularization(buildList {
+                add(L1Regularization(1e-2))
+            })
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
             .list()
