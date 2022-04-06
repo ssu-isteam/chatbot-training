@@ -178,8 +178,7 @@ object KoreanNeuralNetwork {
             .weightInit(WeightInit.XAVIER)
             .dropOut(0.8)
             .regularization(buildList {
-                add(L1Regularization(1e-2))
-                add(L2Regularization(1e-2))
+                add(L1Regularization(0.9))
             })
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
