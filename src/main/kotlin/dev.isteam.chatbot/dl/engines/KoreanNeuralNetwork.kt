@@ -170,20 +170,14 @@ object KoreanNeuralNetwork {
             .updater(RmsProp(1e-2))
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-            .seed(13373)
             .list()
             .layer(
                 0, LSTM.Builder()
                     .nIn(inputSize).nOut(LSTM_LAYERSIZE).activation(Activation.TANH)
                     .build()
-            )
-            .layer(
-                1, DenseLayer.Builder()
-                    .nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH)
-                    .build()
             ).layer(
-                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MSE)
-                    .activation(Activation.TANH)
+                1, RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+                    .activation(Activation.SOFTMAX)
                     .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)

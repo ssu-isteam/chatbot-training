@@ -85,7 +85,6 @@ fun main2(args: Array<String>) {
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(iterator.inputColumns(), iterator.totalOutcomes())
     model.init()
 
-    /*
     val uiServer = UIServer.getInstance()
 
     val statsStorage = InMemoryStatsStorage()
@@ -93,19 +92,10 @@ fun main2(args: Array<String>) {
 
     val listener = StatsListener(statsStorage)
     model.setListeners(listener)
-        */
-    val listener = ScoreIterationListener(100)
-    model.setListeners(listener)
     model.fit(iterator, epoch)
 
     logger.info("Total score: ${model.score()}")
     ModelSerializer.writeModel(model,"model.lstm",true)
-
-    val sample = "안녕하세요."
-    val data = sampleCharactersFromNetwork(sample,model,iterator, Random(1337),maxLen,1)
-    data!!.forEach {
-        println(it!!)
-    }
 
 }
 private fun sampleCharactersFromNetwork(
