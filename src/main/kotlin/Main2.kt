@@ -1,19 +1,15 @@
-
 import dev.isteam.chatbot.dl.api.dataset.iterator.CharacterIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
-import org.deeplearning4j.nn.graph.ComputationGraph
-import org.deeplearning4j.optimize.api.InvocationType
-import org.deeplearning4j.optimize.listeners.EvaluativeListener
-import org.deeplearning4j.optimize.listeners.PerformanceListener
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
-import org.deeplearning4j.optimize.listeners.TimeIterationListener
 import org.deeplearning4j.util.ModelSerializer
-import org.nd4j.evaluation.classification.Evaluation
+import org.nd4j.linalg.factory.Nd4j
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Paths
 import java.security.SecureRandom
+import kotlin.random.Random
 
 
 val logger: Logger = LoggerFactory.getLogger("Main")
@@ -34,7 +30,6 @@ fun main2(args: Array<String>) {
     packedRawDataSet.rawDataSets = packedRawDataSet.dialogues.map { it.rawDataSets }.flatten().toMutableList()
     packedRawDataSet.rawDataSets = filter(packedRawDataSet,true)
      */
-
     logger.info("Reading files completed. Total count: ${packedRawDataSet.dialogues.size}")
 
     /*
@@ -76,7 +71,7 @@ fun main2(args: Array<String>) {
 
     val batchSize = 100
 
-    val epoch = 50
+    val epoch = 100
 
     val maxLen = 20
 
@@ -85,9 +80,75 @@ fun main2(args: Array<String>) {
         CharacterIterator(sentences, batchSize, maxLen, CharacterIterator.defaultCharacterSet, SecureRandom())
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(iterator.inputColumns(), iterator.totalOutcomes())
 
-    val listener = ScoreIterationListener(iterator.totalExamples())
+    val listener = ScoreIterationListener(10)
     model.setListeners(listener)
     model.fit(iterator, epoch)
     logger.info("Total score: ${model.score()}")
     ModelSerializer.writeModel(model,"model.lstm",true)
+
+    val sample = "안녕하세요."
+    val data = sampleCharactersFromNetwork(sample,model,iterator, Random(1337),maxLen,1)
+    data!!.forEach {
+        println(it!!)
+    }
+
+}
+private fun sampleCharactersFromNetwork(
+    initialization: String, net: MultiLayerNetwork,
+    iter: CharacterIterator, rng: Random, charactersToSample: Int, numSamples: Int
+): Array<String?>? {
+    //Set up initialization. If no initialization: use a random character
+    var initialization: String? = initialization
+    if (initialization == null) {
+        initialization = java.lang.String.valueOf(iter.randomCharacter)
+    }
+
+    //Create input for initialization
+    val initializationInput = Nd4j.zeros(numSamples, iter.inputColumns(), initialization!!.length)
+    val init = initialization.toCharArray()
+    for (i in init.indices) {
+        val idx = iter.convertCharacterToIndex(init[i])
+        for (j in 0 until numSamples) {
+            initializationInput.putScalar(intArrayOf(j, idx, i), 1.0f)
+        }
+    }
+    val sb = arrayOfNulls<StringBuilder>(numSamples)
+    for (i in 0 until numSamples) sb[i] = StringBuilder(initialization)
+
+    //Sample from network (and feed samples back into input) one character at a time (for all samples)
+    //Sampling is done in parallel here
+    net.rnnClearPreviousState()
+    var output = net.rnnTimeStep(initializationInput)
+    output = output.tensorAlongDimension(output.size(2) - 1, 1, 0) //Gets the last time step output
+    for (i in 0 until charactersToSample) {
+        //Set up next input (single time step) by sampling from previous output
+        val nextInput = Nd4j.zeros(numSamples, iter.inputColumns())
+        //Output is a probability distribution. Sample from this for each example we want to generate, and add it to the new input
+        for (s in 0 until numSamples) {
+            val outputProbDistribution = DoubleArray(iter.totalOutcomes())
+            for (j in outputProbDistribution.indices) outputProbDistribution[j] =
+                output.getDouble(s.toLong(), j.toLong())
+            val sampledCharacterIdx = sampleFromDistribution(outputProbDistribution, rng)
+            nextInput.putScalar(intArrayOf(s, sampledCharacterIdx), 1.0f) //Prepare next time step input
+            sb[s]!!.append(iter.convertIndexToCharacter(sampledCharacterIdx)) //Add sampled character to StringBuilder (human readable output)
+        }
+        output = net.rnnTimeStep(nextInput) //Do one time step of forward pass
+    }
+    val out = arrayOfNulls<String>(numSamples)
+    for (i in 0 until numSamples) out[i] = sb[i].toString()
+    return out
+}
+
+/** Given a probability distribution over discrete classes, sample from the distribution
+ * and return the generated class index.
+ * @param distribution Probability distribution over classes. Must sum to 1.0
+ */
+fun sampleFromDistribution(distribution: DoubleArray, rng: Random): Int {
+    val d: Double = rng.nextDouble()
+    var sum = 0.0
+    for (i in distribution.indices) {
+        sum += distribution[i]
+        if (d <= sum) return i
+    }
+    throw IllegalArgumentException("Distribution is invalid? d=$d, sum=$sum")
 }
