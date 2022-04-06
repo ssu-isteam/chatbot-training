@@ -1,8 +1,12 @@
 import dev.isteam.chatbot.dl.api.dataset.iterator.CharacterIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
+import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
+import org.deeplearning4j.ui.api.UIServer
+import org.deeplearning4j.ui.model.stats.StatsListener
+import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.linalg.factory.Nd4j
 import org.slf4j.Logger
@@ -69,9 +73,9 @@ fun main2(args: Array<String>) {
     vec.fit()
 */
 
-    val batchSize = 100
+    val batchSize = 10
 
-    val epoch = 100
+    val epoch = 1
 
     val maxLen = 20
 
@@ -79,10 +83,21 @@ fun main2(args: Array<String>) {
     var iterator =
         CharacterIterator(sentences, batchSize, maxLen, CharacterIterator.defaultCharacterSet, SecureRandom())
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(iterator.inputColumns(), iterator.totalOutcomes())
+    model.init()
 
-    val listener = ScoreIterationListener(10)
+    /*
+    val uiServer = UIServer.getInstance()
+
+    val statsStorage = InMemoryStatsStorage()
+    uiServer.attach(statsStorage)
+
+    val listener = StatsListener(statsStorage)
+    model.setListeners(listener)
+        */
+    val listener = ScoreIterationListener(100)
     model.setListeners(listener)
     model.fit(iterator, epoch)
+
     logger.info("Total score: ${model.score()}")
     ModelSerializer.writeModel(model,"model.lstm",true)
 

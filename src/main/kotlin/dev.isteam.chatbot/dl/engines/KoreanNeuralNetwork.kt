@@ -1,12 +1,9 @@
 package dev.isteam.chatbot.dl.engines
 
-import org.bytedeco.opencv.opencv_core.SparseMat
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.BackpropType
 import org.deeplearning4j.nn.conf.GradientNormalization
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
-import org.deeplearning4j.nn.conf.distribution.ConstantDistribution
-import org.deeplearning4j.nn.conf.distribution.Distribution
 import org.deeplearning4j.nn.conf.layers.DenseLayer
 import org.deeplearning4j.nn.conf.layers.LSTM
 import org.deeplearning4j.nn.conf.layers.OutputLayer
@@ -15,19 +12,15 @@ import org.deeplearning4j.nn.conf.layers.variational.VariationalAutoencoder
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
-import org.nd4j.linalg.learning.config.AdaGrad
 import org.nd4j.linalg.learning.config.Adam
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.learning.config.RmsProp
-import org.nd4j.linalg.learning.config.Sgd
-import org.nd4j.linalg.learning.regularization.L1Regularization
-import org.nd4j.linalg.learning.regularization.L2Regularization
 import org.nd4j.linalg.lossfunctions.LossFunctions
 import kotlin.math.pow
 
 object KoreanNeuralNetwork {
     const val LSTM_LAYERSIZE = 128
-    const val TBTT_SIZE = 50
+    const val TBTT_SIZE = 128
 
     fun buildLogisticRegression(inputSize: Int, outputSize: Int): MultiLayerNetwork {
         var conf = NeuralNetConfiguration.Builder()
@@ -171,28 +164,26 @@ object KoreanNeuralNetwork {
         return MultiLayerNetwork(modelConf.build())
     }
 
-    fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork{
+    fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
+
         var conf = NeuralNetConfiguration.Builder()
-            .updater(RmsProp(1e-2).apply {
-                rmsDecay = 0.95
-            })
-            .activation(Activation.TANH)
+            .updater(RmsProp(1e-2))
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
             .list()
             .layer(
                 0, LSTM.Builder()
-                    .nIn(inputSize).nOut(LSTM_LAYERSIZE)
+                    .nIn(inputSize).nOut(LSTM_LAYERSIZE).activation(Activation.TANH)
                     .build()
             )
             .layer(
                 1, DenseLayer.Builder()
-                    .nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE)
+                    .nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH)
                     .build()
             ).layer(
-                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-                    .activation(Activation.SOFTMAX)
+                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                    .activation(Activation.TANH)
                     .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
