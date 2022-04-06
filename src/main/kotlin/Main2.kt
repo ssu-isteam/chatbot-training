@@ -4,9 +4,6 @@ import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
 import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
-import org.deeplearning4j.ui.api.UIServer
-import org.deeplearning4j.ui.model.stats.StatsListener
-import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.linalg.factory.Nd4j
 import org.slf4j.Logger
@@ -75,7 +72,7 @@ fun main2(args: Array<String>) {
 
     val batchSize = 10
 
-    val epoch = 1
+    val epoch = 5
 
     val maxLen = 20
 
@@ -85,12 +82,8 @@ fun main2(args: Array<String>) {
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(iterator.inputColumns(), iterator.totalOutcomes())
     model.init()
 
-    val uiServer = UIServer.getInstance()
 
-    val statsStorage = InMemoryStatsStorage()
-    uiServer.attach(statsStorage)
-
-    val listener = StatsListener(statsStorage)
+    val listener = ScoreIterationListener(1000)
     model.setListeners(listener)
     model.fit(iterator, epoch)
 

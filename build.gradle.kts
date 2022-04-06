@@ -35,7 +35,6 @@ dependencies {
    implementation(group = "org.nd4j", name = "nd4j-cuda-10.0-platform", version = nd4jVersion)
    //implementation(group="org.deeplearning4j",name="deeplearning4j-cudnn",version=dl4jVersion)
     implementation(group="org.deeplearning4j",name="deeplearning4j-cuda-10.0",version=dl4jVersion)
-    implementation(group="org.deeplearning4j",name="deeplearning4j-ui",version=dl4jVersion)
     //implementation("org.bytedeco:cuda-platform-redist:11.2-8.1-1.5.5")
     implementation(group = "org.deeplearning4j", name = "deeplearning4j-core", version = dl4jVersion)
     implementation(group = "org.deeplearning4j", name = "deeplearning4j-nlp", version = dl4jVersion)
