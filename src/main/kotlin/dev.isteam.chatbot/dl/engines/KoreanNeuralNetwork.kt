@@ -174,6 +174,7 @@ object KoreanNeuralNetwork {
             .updater(RmsProp(1e-2))
             .activation(Activation.TANH)
             .weightInit(WeightInit.XAVIER)
+            .dropOut(0.8)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
             .list()
