@@ -7,6 +7,7 @@ import org.deeplearning4j.optimize.api.InvocationType
 import org.deeplearning4j.optimize.listeners.EvaluativeListener
 import org.deeplearning4j.optimize.listeners.PerformanceListener
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
+import org.deeplearning4j.optimize.listeners.TimeIterationListener
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.evaluation.classification.Evaluation
 import org.slf4j.Logger
@@ -83,7 +84,8 @@ fun main2(args: Array<String>) {
     var iterator =
         CharacterIterator(sentences, batchSize, maxLen, CharacterIterator.defaultCharacterSet, SecureRandom())
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(iterator.inputColumns(), iterator.totalOutcomes())
-    var listener = PerformanceListener(1000)
+
+    val listener = ScoreIterationListener(iterator.totalExamples())
     model.setListeners(listener)
     model.fit(iterator, epoch)
     logger.info("Total score: ${model.score()}")
