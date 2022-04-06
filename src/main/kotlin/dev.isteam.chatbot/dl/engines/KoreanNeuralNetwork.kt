@@ -173,13 +173,11 @@ object KoreanNeuralNetwork {
 
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork{
         var conf = NeuralNetConfiguration.Builder()
-            .updater(RmsProp(1e-2))
+            .updater(RmsProp(1e-2).apply {
+                rmsDecay = 0.95
+            })
             .activation(Activation.TANH)
             .weightInit(WeightInit.XAVIER)
-            .dropOut(0.8)
-            .regularization(buildList {
-                add(L1Regularization(0.9))
-            })
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .seed(13373)
             .list()
@@ -194,8 +192,10 @@ object KoreanNeuralNetwork {
                     .build()
             ).layer(
                 2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+                    .activation(Activation.SOFTMAX)
                     .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )
+            .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
             .build()
         return MultiLayerNetwork(conf)
     }
