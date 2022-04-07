@@ -34,7 +34,6 @@ fun main2(args: Array<String>) {
     var viveDataSetLoader = VIVEDataSetLoader(files.map { Paths.get(motherPath, it).toString() }.toTypedArray())
 
     var packedRawDataSet = viveDataSetLoader.loadDialogues().get()[0]
-    packedRawDataSet.rawDataSets = packedRawDataSet.rawDataSets.subList(0,150)
     /*
     packedRawDataSet.dialogues = packedRawDataSet.dialogues.subList(0, 100)
     packedRawDataSet.rawDataSets = packedRawDataSet.dialogues.map { it.rawDataSets }.flatten().toMutableList()
@@ -75,6 +74,9 @@ fun main2(args: Array<String>) {
     logger.info("Starting fitting Word2Vec...")
     vec.fit()
 
+    WordVectorSerializer.writeVocabCache(koreanTfidfVectorizer.vocabCache,File("vocabcache.bin"))
+    WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
+
     var x = mutableListOf<String>()
     var y = mutableListOf<String>()
     for(i in 0 until packedRawDataSet.rawDataSets.size - 1){
@@ -91,6 +93,7 @@ fun main2(args: Array<String>) {
 
     model.setListeners(ScoreIterationListener(x.size))
     model.fit(dataSource,10)
+    ModelSerializer.writeModel(model,"model.bin",true)
 /*
     val batchSize = 10
 
