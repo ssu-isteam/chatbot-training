@@ -48,7 +48,7 @@ fun main2(args: Array<String>) {
 
     logger.info("Starting fitting tfidf vectorizer....")
 
-
+    /*
 
     var koreanTfidfVectorizer =
         KoreanTfidfVectorizer(packedRawDataSet = packedRawDataSet, koreanTokenizerFactory = tokenizerFactory)
@@ -73,9 +73,15 @@ fun main2(args: Array<String>) {
 
     logger.info("Starting fitting Word2Vec...")
     vec.fit()
-
+    */
+    /*
     WordVectorSerializer.writeVocabCache(koreanTfidfVectorizer.vocabCache,File("vocabcache.bin"))
     WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
+   */
+
+    val vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"),true)
+    val vocabCache = WordVectorSerializer.readVocabCache(File("vocabcache.bin"))
+    val koreanTfidfVectorizer = KoreanTfidfVectorizer(packedRawDataSet = packedRawDataSet, koreanTokenizerFactory = tokenizerFactory, cache =vocabCache)
 
     var x = mutableListOf<String>()
     var y = mutableListOf<String>()
@@ -86,7 +92,7 @@ fun main2(args: Array<String>) {
 
 
     val rawDataSet = Word2VecRawDataSet(x,y)
-    val dataSource = Word2VecDataSource(packedRawDataSet = rawDataSet, word2Vec = vec,koreanTfidfVectorizer = koreanTfidfVectorizer, koreanTokenizerFactory = tokenizerFactory)
+    val dataSource = Word2VecDataSource(packedRawDataSet = rawDataSet, word2Vec = vec,koreanTfidfVectorizer = koreanTfidfVectorizer, koreanTokenizerFactory = tokenizerFactory, batchSize = batchSize)
 
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(),dataSource.inputColumns())
     model.init()
