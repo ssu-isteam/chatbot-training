@@ -1,6 +1,14 @@
+import dev.isteam.chatbot.dl.api.dataset.Word2VecRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.iterator.CharacterIterator
+import dev.isteam.chatbot.dl.api.dataset.iterator.RawDataSetIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
+import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
+import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
+import dev.isteam.chatbot.dl.api.vector.KoreanTfidfVectorizer
+import dev.isteam.chatbot.dl.api.vector.Word2VecDataSource
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
+import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
@@ -8,6 +16,7 @@ import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.linalg.factory.Nd4j
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.File
 import java.nio.file.Paths
 import java.security.SecureRandom
 import kotlin.random.Random
@@ -25,7 +34,7 @@ fun main2(args: Array<String>) {
     var viveDataSetLoader = VIVEDataSetLoader(files.map { Paths.get(motherPath, it).toString() }.toTypedArray())
 
     var packedRawDataSet = viveDataSetLoader.loadDialogues().get()[0]
-
+    packedRawDataSet.rawDataSets = packedRawDataSet.rawDataSets.subList(0,150)
     /*
     packedRawDataSet.dialogues = packedRawDataSet.dialogues.subList(0, 100)
     packedRawDataSet.rawDataSets = packedRawDataSet.dialogues.map { it.rawDataSets }.flatten().toMutableList()
@@ -33,7 +42,6 @@ fun main2(args: Array<String>) {
      */
     logger.info("Reading files completed. Total count: ${packedRawDataSet.dialogues.size}")
 
-    /*
     var tokenizerFactory = KoreanTokenizerFactory()
     tokenizerFactory.tokenPreProcessor = KoreanTokenPreprocessor()
 
@@ -41,12 +49,10 @@ fun main2(args: Array<String>) {
 
     logger.info("Starting fitting tfidf vectorizer....")
 
-    var vocabCache = WordVectorSerializer.readVocabCache(File("vocab.cache"))
-
 
 
     var koreanTfidfVectorizer =
-        KoreanTfidfVectorizer(packedRawDataSet = packedRawDataSet, koreanTokenizerFactory = tokenizerFactory, cache = vocabCache)
+        KoreanTfidfVectorizer(packedRawDataSet = packedRawDataSet, koreanTokenizerFactory = tokenizerFactory)
    koreanTfidfVectorizer.fit()
 
 
@@ -68,8 +74,24 @@ fun main2(args: Array<String>) {
 
     logger.info("Starting fitting Word2Vec...")
     vec.fit()
-*/
 
+    var x = mutableListOf<String>()
+    var y = mutableListOf<String>()
+    for(i in 0 until packedRawDataSet.rawDataSets.size - 1){
+        x.add(packedRawDataSet.rawDataSets[i].question!!)
+        y.add(packedRawDataSet.rawDataSets[i+1].question!!)
+    }
+
+
+    val rawDataSet = Word2VecRawDataSet(x,y)
+    val dataSource = Word2VecDataSource(packedRawDataSet = rawDataSet, word2Vec = vec,koreanTfidfVectorizer = koreanTfidfVectorizer, koreanTokenizerFactory = tokenizerFactory)
+
+    val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(),dataSource.inputColumns())
+    model.init()
+
+    model.setListeners(ScoreIterationListener(x.size))
+    model.fit(dataSource,10)
+/*
     val batchSize = 10
 
     val epoch = 5
@@ -89,7 +111,7 @@ fun main2(args: Array<String>) {
 
     logger.info("Total score: ${model.score()}")
     ModelSerializer.writeModel(model,"model.lstm",true)
-
+*/
 }
 private fun sampleCharactersFromNetwork(
     initialization: String, net: MultiLayerNetwork,

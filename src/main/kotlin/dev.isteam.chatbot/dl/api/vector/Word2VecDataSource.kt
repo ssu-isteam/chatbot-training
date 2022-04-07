@@ -3,6 +3,7 @@ package dev.isteam.chatbot.dl.api.vector
 import dev.isteam.chatbot.dl.api.dataset.LSTMPackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.RawDataSet
+import dev.isteam.chatbot.dl.api.dataset.Word2VecRawDataSet
 import dev.isteam.chatbot.dl.api.preprocessor.MeanEmbeddingVectorizer
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
 import logger
@@ -20,7 +21,7 @@ import kotlin.math.pow
 
 
 class Word2VecDataSource(
-    private val packedRawDataSet: LSTMPackedRawDataSet,
+    private val packedRawDataSet: Word2VecRawDataSet,
     private val word2Vec: Word2Vec,
     private val koreanTfidfVectorizer: KoreanTfidfVectorizer,
     private val koreanTokenizerFactory: KoreanTokenizerFactory,
@@ -28,17 +29,11 @@ class Word2VecDataSource(
         koreanTfidfVectorizer,
         word2Vec
     ),
+    private var sentencesLeft:Int = packedRawDataSet.x.size,
     private val batchSize: Int = 100,
     private var dataCount: Int = 0,
     private var preProcessor: DataSetPreProcessor? = null,
-    private var iterator: ListIterator<PackedRawDataSet> = packedRawDataSet.dialogues.listIterator(),
-    private val labels: MutableList<String> = IntRange(
-        0,
-        packedRawDataSet.rawDataSets.size - 1
-    ).map { it.toString() }.toMutableList(),
-    private val timeSeries: Int = packedRawDataSet.max,
-
-    private val parentExp:Double = 10.0.pow(log10(packedRawDataSet.dialogues.size.toDouble()) + 1)
+    private val maxLen:Int = 50,
 ) : DataSetIterator {
 
 
@@ -54,7 +49,7 @@ class Word2VecDataSource(
      * Returns `true` if the iteration has more elements.
      */
     override fun hasNext(): Boolean {
-        return iterator.hasNext()
+        return sentencesLeft > 0
     }
 
     /**
@@ -65,7 +60,43 @@ class Word2VecDataSource(
      * @return the next data applyTransformToDestination
      */
     override fun next(num: Int): DataSet {
-        return nextDataSet(num)
+        var features = Nd4j.zeros(num,maxLen,word2Vec.layerSize)
+        var labels = Nd4j.zeros(num,maxLen,word2Vec.layerSize)
+        for(i in 0 until batchSize){
+            if(! hasNext())
+                reset()
+
+
+            var sentenceVec = Nd4j.zeros(maxLen,word2Vec.layerSize)
+
+            var tokenizer = koreanTokenizerFactory.create(packedRawDataSet.x[totalOutcomes() - sentencesLeft])
+
+            val xTokens = tokenizer.tokens
+
+            for(j in 0 until xTokens.size){
+                if(! word2Vec.hasWord(xTokens[j]))
+                    continue
+                val wordVector = word2Vec.getWordVectorMatrix(xTokens[j])
+                sentenceVec.putRow(j.toLong(),wordVector)
+            }
+            features.putRow(i.toLong(),sentenceVec)
+
+            tokenizer = koreanTokenizerFactory.create(packedRawDataSet.y[totalOutcomes() - sentencesLeft])
+            val yTokens = tokenizer.tokens
+
+            var ySentencesVec = Nd4j.zeros(maxLen,word2Vec.layerSize)
+
+            for(j in 0 until yTokens.size){
+                if(! word2Vec.hasWord(yTokens[j]))
+                    continue
+                val wordVector = word2Vec.getWordVectorMatrix(yTokens[j])
+                ySentencesVec.putRow(j.toLong(),wordVector)
+            }
+
+            labels.putRow(i.toLong(),ySentencesVec)
+            sentencesLeft--;
+        }
+        return DataSet(features,labels)
     }
 
     private fun mdsToDataSet(mds: MultiDataSet): DataSet {
@@ -96,7 +127,7 @@ class Word2VecDataSource(
         return next(batchSize)
     }
 
-
+    /*
     private fun nextDataSet(numExamples: Int): DataSet {
 
         var features = Nd4j.create(numExamples, inputColumns(), timeSeries)
@@ -135,14 +166,14 @@ class Word2VecDataSource(
 
         return DataSet(features, labelsVector)
     }
-
+    */
     /**
      * Input columns for the dataset
      *
      * @return
      */
     override fun inputColumns(): Int {
-        return word2Vec.layerSize
+        return maxLen
     }
 
     /**
@@ -151,7 +182,7 @@ class Word2VecDataSource(
      * @return
      */
     override fun totalOutcomes(): Int {
-        return packedRawDataSet.rawDataSets.size
+        return packedRawDataSet.x.size
     }
 
     /**
@@ -185,8 +216,7 @@ class Word2VecDataSource(
      * Resets the iterator back to the beginning
      */
     override fun reset() {
-        dataCount = 0
-        iterator = packedRawDataSet.dialogues.listIterator()
+        sentencesLeft = packedRawDataSet.x.size
     }
 
     /**
