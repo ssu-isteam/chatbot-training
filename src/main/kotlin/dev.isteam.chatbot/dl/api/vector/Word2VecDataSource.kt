@@ -67,38 +67,44 @@ class Word2VecDataSource(
                 reset()
 
 
-            var sentenceVec = Nd4j.zeros(maxLen,word2Vec.layerSize)
+            var sentenceVec = Nd4j.create(maxLen,word2Vec.layerSize)
 
-            var tokenizer = koreanTokenizerFactory.create(packedRawDataSet.x[totalOutcomes() - sentencesLeft])
+            var tokenizer = koreanTokenizerFactory.create(packedRawDataSet.x[packedRawDataSet.x.size - sentencesLeft])
 
             val xTokens = tokenizer.tokens
 
             for(j in 0 until xTokens.size){
+                if(j >= maxLen)
+                    break
                 if(! word2Vec.hasWord(xTokens[j]))
                     continue
-                val wordVector = word2Vec.getWordVectorMatrix(xTokens[j])
-                sentenceVec.putRow(j.toLong(),wordVector)
+                val wordVector = word2Vec.getWordVector(xTokens[j])
+                sentenceVec.putRow(j.toLong(),Nd4j.create(wordVector))
             }
             features.putRow(i.toLong(),sentenceVec)
-
-            tokenizer = koreanTokenizerFactory.create(packedRawDataSet.y[totalOutcomes() - sentencesLeft])
+            tokenizer = koreanTokenizerFactory.create(packedRawDataSet.y[packedRawDataSet.x.size - sentencesLeft])
             val yTokens = tokenizer.tokens
 
-            var ySentencesVec = Nd4j.zeros(maxLen,word2Vec.layerSize)
+            var ySentencesVec = Nd4j.create(maxLen,word2Vec.layerSize)
+
 
             for(j in 0 until yTokens.size){
+                if(j >= maxLen)
+                    break
                 if(! word2Vec.hasWord(yTokens[j]))
                     continue
                 val wordVector = word2Vec.getWordVectorMatrix(yTokens[j])
                 ySentencesVec.putRow(j.toLong(),wordVector)
+
             }
 
             labels.putRow(i.toLong(),ySentencesVec)
-            sentencesLeft--;
+            sentencesLeft--
         }
         return DataSet(features,labels)
     }
 
+    /*
     private fun mdsToDataSet(mds: MultiDataSet): DataSet {
         var f = mds.features[0]
         var fm = mds.featuresMaskArrays[0]
@@ -108,6 +114,8 @@ class Word2VecDataSource(
 
         return DataSet(f, l, fm, lm)
     }
+
+     */
     /*
     private fun nextMultiDataSet(num: Int) : MultiDataSet{
         var datasetList = ArrayList<DataSet>()
@@ -182,7 +190,7 @@ class Word2VecDataSource(
      * @return
      */
     override fun totalOutcomes(): Int {
-        return packedRawDataSet.x.size
+        return maxLen
     }
 
     /**
@@ -209,7 +217,7 @@ class Word2VecDataSource(
      * be used with this iterator
      */
     override fun asyncSupported(): Boolean {
-        return true
+        return false
     }
 
     /**
@@ -250,8 +258,8 @@ class Word2VecDataSource(
      * Get dataset iterator class labels, if any.
      * Note that implementations are not required to implement this, and can simply return null
      */
-    override fun getLabels(): MutableList<String> {
-        return labels
+    override fun getLabels(): MutableList<String>? {
+        return null
     }
 
     private fun toOutcomeVector(idx:Int, size:Int) : INDArray{
