@@ -1,5 +1,6 @@
 import dev.isteam.chatbot.dl.api.dataset.Word2VecRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.iterator.CharacterIterator
+import dev.isteam.chatbot.dl.api.dataset.iterator.RawDataSetIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
@@ -7,6 +8,7 @@ import dev.isteam.chatbot.dl.api.vector.KoreanTfidfVectorizer
 import dev.isteam.chatbot.dl.api.vector.Word2VecDataSource
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
+import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.util.ModelSerializer
@@ -44,8 +46,6 @@ fun main2(args: Array<String>) {
 
     logger.info("Starting fitting tfidf vectorizer....")
 
-    /*
-
     var koreanTfidfVectorizer =
         KoreanTfidfVectorizer(packedRawDataSet = packedRawDataSet, koreanTokenizerFactory = tokenizerFactory)
    koreanTfidfVectorizer.fit()
@@ -57,7 +57,7 @@ fun main2(args: Array<String>) {
     val vec: Word2Vec = Word2Vec.Builder()
         .minWordFrequency(5)
         .iterations(1)
-        .epochs(1)
+        .epochs(5)
         .layerSize(50)
         .batchSize(10000)
         .workers(10)
@@ -69,12 +69,11 @@ fun main2(args: Array<String>) {
 
     logger.info("Starting fitting Word2Vec...")
     vec.fit()
-    */
     /*
     WordVectorSerializer.writeVocabCache(koreanTfidfVectorizer.vocabCache,File("vocabcache.bin"))
     WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
    */
-
+    /*
     val vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"), true)
     val vocabCache = WordVectorSerializer.readVocabCache(File("vocabcache.bin"))
     val koreanTfidfVectorizer = KoreanTfidfVectorizer(
@@ -82,7 +81,7 @@ fun main2(args: Array<String>) {
         koreanTokenizerFactory = tokenizerFactory,
         cache = vocabCache
     )
-
+*/
     var x = mutableListOf<String>()
     var y = mutableListOf<String>()
     for (i in 0 until packedRawDataSet.rawDataSets.size - 1) {
@@ -103,7 +102,7 @@ fun main2(args: Array<String>) {
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(), dataSource.inputColumns())
     model.init()
     model.setListeners(ScoreIterationListener(1))
-    model.fit(dataSource, 3)
+    model.fit(dataSource, 10)
     ModelSerializer.writeModel(model, "model.bin", true)
 /*
     val batchSize = 10
