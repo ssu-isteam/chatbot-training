@@ -1,6 +1,5 @@
 import dev.isteam.chatbot.dl.api.dataset.Word2VecRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.iterator.CharacterIterator
-import dev.isteam.chatbot.dl.api.dataset.iterator.RawDataSetIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
@@ -8,8 +7,6 @@ import dev.isteam.chatbot.dl.api.vector.KoreanTfidfVectorizer
 import dev.isteam.chatbot.dl.api.vector.Word2VecDataSource
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.models.word2vec.Word2Vec
-import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.util.ModelSerializer
@@ -18,7 +15,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Paths
-import java.security.SecureRandom
 import kotlin.random.Random
 
 
@@ -79,27 +75,36 @@ fun main2(args: Array<String>) {
     WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
    */
 
-    val vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"),true)
+    val vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"), true)
     val vocabCache = WordVectorSerializer.readVocabCache(File("vocabcache.bin"))
-    val koreanTfidfVectorizer = KoreanTfidfVectorizer(packedRawDataSet = packedRawDataSet, koreanTokenizerFactory = tokenizerFactory, cache =vocabCache)
+    val koreanTfidfVectorizer = KoreanTfidfVectorizer(
+        packedRawDataSet = packedRawDataSet,
+        koreanTokenizerFactory = tokenizerFactory,
+        cache = vocabCache
+    )
 
     var x = mutableListOf<String>()
     var y = mutableListOf<String>()
-    for(i in 0 until packedRawDataSet.rawDataSets.size - 1){
+    for (i in 0 until packedRawDataSet.rawDataSets.size - 1) {
         x.add(packedRawDataSet.rawDataSets[i].question!!)
-        y.add(packedRawDataSet.rawDataSets[i+1].question!!)
+        y.add(packedRawDataSet.rawDataSets[i + 1].question!!)
     }
 
 
-    val rawDataSet = Word2VecRawDataSet(x,y)
-    val dataSource = Word2VecDataSource(packedRawDataSet = rawDataSet, word2Vec = vec,koreanTfidfVectorizer = koreanTfidfVectorizer, koreanTokenizerFactory = tokenizerFactory, batchSize = batchSize)
+    val rawDataSet = Word2VecRawDataSet(x, y)
+    val dataSource = Word2VecDataSource(
+        packedRawDataSet = rawDataSet,
+        word2Vec = vec,
+        koreanTfidfVectorizer = koreanTfidfVectorizer,
+        koreanTokenizerFactory = tokenizerFactory,
+        batchSize = batchSize
+    )
 
-    val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(),dataSource.inputColumns())
+    val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(), dataSource.inputColumns())
     model.init()
-
-    model.setListeners(ScoreIterationListener(x.size))
-    model.fit(dataSource,10)
-    ModelSerializer.writeModel(model,"model.bin",true)
+    model.setListeners(ScoreIterationListener(1))
+    model.fit(dataSource, 3)
+    ModelSerializer.writeModel(model, "model.bin", true)
 /*
     val batchSize = 10
 
@@ -122,6 +127,7 @@ fun main2(args: Array<String>) {
     ModelSerializer.writeModel(model,"model.lstm",true)
 */
 }
+
 private fun sampleCharactersFromNetwork(
     initialization: String, net: MultiLayerNetwork,
     iter: CharacterIterator, rng: Random, charactersToSample: Int, numSamples: Int
