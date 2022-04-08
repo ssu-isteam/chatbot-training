@@ -60,10 +60,11 @@ class Word2VecDataSource(
      * @return the next data applyTransformToDestination
      */
     override fun next(num: Int): DataSet {
-        if(! hasNext()) throw NoSuchElementException()
+
         var features = Nd4j.zeros(num,maxLen,word2Vec.layerSize)
         var labels = Nd4j.zeros(num,maxLen,word2Vec.layerSize)
         for(i in 0 until batchSize){
+            if(! hasNext()) throw NoSuchElementException()
             var sentenceVec = Nd4j.create(maxLen,word2Vec.layerSize)
 
             var tokenizer = koreanTokenizerFactory.create(packedRawDataSet.x[packedRawDataSet.x.size - sentencesLeft])
