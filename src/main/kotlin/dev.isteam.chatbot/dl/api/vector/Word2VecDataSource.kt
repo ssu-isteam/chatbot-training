@@ -49,7 +49,7 @@ class Word2VecDataSource(
      * Returns `true` if the iteration has more elements.
      */
     override fun hasNext(): Boolean {
-        return sentencesLeft > 0
+        return sentencesLeft - 1 > 0
     }
 
     /**
