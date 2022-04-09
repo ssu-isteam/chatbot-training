@@ -57,7 +57,7 @@ fun main2(args: Array<String>) {
     val vec: Word2Vec = Word2Vec.Builder()
         .minWordFrequency(5)
         .iterations(1)
-        .epochs(5)
+        .epochs(3)
         .layerSize(50)
         .batchSize(10000)
         .workers(10)
