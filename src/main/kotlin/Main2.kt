@@ -1,6 +1,4 @@
 import dev.isteam.chatbot.dl.api.dataset.Word2VecRawDataSet
-import dev.isteam.chatbot.dl.api.dataset.iterator.CharacterIterator
-import dev.isteam.chatbot.dl.api.dataset.iterator.RawDataSetIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
@@ -8,18 +6,14 @@ import dev.isteam.chatbot.dl.api.vector.KoreanTfidfVectorizer
 import dev.isteam.chatbot.dl.api.vector.Word2VecDataSource
 import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.models.word2vec.Word2Vec
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.optimize.api.InvocationType
 import org.deeplearning4j.optimize.listeners.EvaluativeListener
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.util.ModelSerializer
-import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.evaluation.classification.ROC
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Paths
-import kotlin.random.Random
 
 
 val logger: Logger = LoggerFactory.getLogger("Main")
@@ -101,8 +95,9 @@ fun main2(args: Array<String>) {
 
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(), dataSource.inputColumns())
     model.init()
-    model.setListeners(EvaluativeListener(dataSource,1,InvocationType.EPOCH_END))
-    model.fit(dataSource, 5)
+    model.setListeners(EvaluativeListener(dataSource, 1, InvocationType.EPOCH_END, ROC()))
+    model.fit(dataSource, 100)
+
     ModelSerializer.writeModel(model, "model.bin", true)
 /*
     val batchSize = 10
