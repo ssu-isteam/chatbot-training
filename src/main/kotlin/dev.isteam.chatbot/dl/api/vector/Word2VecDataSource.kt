@@ -76,11 +76,11 @@ class Word2VecDataSource(
                     break
                 if(! word2Vec.hasWord(xTokens[j]))
                     continue
-                val wordVector = word2Vec.getWordVector(xTokens[j])
-                sentenceVec.putRow(j.toLong(),Nd4j.create(wordVector))
+                val wordVector = word2Vec.getWordVectorMatrix(xTokens[j])
+                sentenceVec.putRow(j.toLong(),wordVector)
             }
             features.putRow(i.toLong(),sentenceVec)
-            tokenizer = koreanTokenizerFactory.create(packedRawDataSet.y[packedRawDataSet.x.size - sentencesLeft])
+            tokenizer = koreanTokenizerFactory.create(packedRawDataSet.y[packedRawDataSet.y.size - sentencesLeft])
             val yTokens = tokenizer.tokens
 
             var ySentencesVec = Nd4j.create(maxLen,word2Vec.layerSize)
