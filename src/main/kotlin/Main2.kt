@@ -42,7 +42,7 @@ fun main2(args: Array<String>) {
     var tokenizerFactory = KoreanTokenizerFactory()
     tokenizerFactory.tokenPreProcessor = KoreanTokenPreprocessor()
 
-    var batchSize = 1000
+    var batchSize = 900
 
     logger.info("Starting fitting tfidf vectorizer....")
 
@@ -69,10 +69,8 @@ fun main2(args: Array<String>) {
 
     logger.info("Starting fitting Word2Vec...")
     vec.fit()
-    /*
     WordVectorSerializer.writeVocabCache(koreanTfidfVectorizer.vocabCache,File("vocabcache.bin"))
     WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
-   */
     /*
     val vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"), true)
     val vocabCache = WordVectorSerializer.readVocabCache(File("vocabcache.bin"))
@@ -102,7 +100,7 @@ fun main2(args: Array<String>) {
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(), dataSource.inputColumns())
     model.init()
     model.setListeners(ScoreIterationListener(1))
-    model.fit(dataSource, 10)
+    model.fit(dataSource, 5)
     ModelSerializer.writeModel(model, "model.bin", true)
 /*
     val batchSize = 10
