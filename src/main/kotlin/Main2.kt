@@ -95,7 +95,7 @@ fun main2(args: Array<String>) {
 
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(), dataSource.inputColumns())
     model.init()
-    model.setListeners(EvaluativeListener(dataSource, 1, InvocationType.EPOCH_END, ROC()))
+    model.setListeners(EvaluativeListener(dataSource, 1, InvocationType.EPOCH_END))
     model.fit(dataSource, 100)
 
     ModelSerializer.writeModel(model, "model.bin", true)
