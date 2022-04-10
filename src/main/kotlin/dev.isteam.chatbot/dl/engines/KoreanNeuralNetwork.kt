@@ -167,20 +167,20 @@ object KoreanNeuralNetwork {
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
 
         var conf = NeuralNetConfiguration.Builder()
-            .updater(Adam(1e-2))
+            .updater(Adam(1e-3))
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .list()
             .layer(
                 0, LSTM.Builder()
-                    .nIn(inputSize).nOut(LSTM_LAYERSIZE).activation(Activation.TANH)
+                    .nIn(inputSize).nOut(LSTM_LAYERSIZE).activation(Activation.SIGMOID)
                     .build()
             )
-            .layer(1, LSTM.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH).build())
-            .layer(2, LSTM.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH).build())
+            .layer(1, LSTM.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.SIGMOID).build())
+            .layer(2, LSTM.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.SIGMOID).build())
             .layer(
                 3, RnnOutputLayer.Builder(LossFunctions.LossFunction.COSINE_PROXIMITY)
-                    .activation(Activation.TANH)
+                    .activation(Activation.SIGMOID)
                     .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
