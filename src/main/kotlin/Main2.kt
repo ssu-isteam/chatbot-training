@@ -8,6 +8,7 @@ import dev.isteam.chatbot.dl.engines.KoreanNeuralNetwork
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.optimize.api.InvocationType
 import org.deeplearning4j.optimize.listeners.EvaluativeListener
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.evaluation.classification.ROC
 import org.slf4j.Logger
@@ -95,7 +96,7 @@ fun main2(args: Array<String>) {
 
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(), dataSource.inputColumns())
     model.init()
-    model.setListeners(EvaluativeListener(dataSource, 1, InvocationType.EPOCH_END))
+    model.addListeners(EvaluativeListener(dataSource, 1, InvocationType.EPOCH_END),ScoreIterationListener(1))
     model.fit(dataSource, 100)
 
     ModelSerializer.writeModel(model, "model.bin", true)

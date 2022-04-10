@@ -176,10 +176,8 @@ object KoreanNeuralNetwork {
                     .nIn(inputSize).nOut(LSTM_LAYERSIZE).activation(Activation.TANH)
                     .build()
             )
-            .layer(1, LSTM.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH).build())
-            .layer(2, LSTM.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH).build())
             .layer(
-                3, RnnOutputLayer.Builder(LossFunctions.LossFunction.MSE)
+                1, RnnOutputLayer.Builder(LossFunctions.LossFunction.SQUARED_LOSS)
                     .activation(Activation.TANH)
                     .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )
