@@ -20,7 +20,7 @@ import kotlin.math.pow
 
 object KoreanNeuralNetwork {
     const val LSTM_LAYERSIZE = 128
-    const val TBTT_SIZE = 128
+    const val TBTT_SIZE = 50
 
     fun buildLogisticRegression(inputSize: Int, outputSize: Int): MultiLayerNetwork {
         var conf = NeuralNetConfiguration.Builder()
@@ -167,7 +167,7 @@ object KoreanNeuralNetwork {
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
 
         var conf = NeuralNetConfiguration.Builder()
-            .updater(Adam(1e-3))
+            .updater(RmsProp(1e-1))
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .list()
@@ -176,8 +176,9 @@ object KoreanNeuralNetwork {
                     .nIn(inputSize).nOut(LSTM_LAYERSIZE).activation(Activation.TANH)
                     .build()
             )
+            .layer(1,DenseLayer.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH).build())
             .layer(
-                1, RnnOutputLayer.Builder(LossFunctions.LossFunction.SQUARED_LOSS)
+                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.COSINE_PROXIMITY)
                     .activation(Activation.TANH)
                     .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )

@@ -10,7 +10,10 @@ import org.deeplearning4j.optimize.api.InvocationType
 import org.deeplearning4j.optimize.listeners.EvaluativeListener
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.util.ModelSerializer
+import org.nd4j.evaluation.classification.Evaluation
 import org.nd4j.evaluation.classification.ROC
+import org.nd4j.linalg.api.ndarray.INDArray
+import org.nd4j.linalg.indexing.NDArrayIndex
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -96,9 +99,9 @@ fun main2(args: Array<String>) {
 
     val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(), dataSource.inputColumns())
     model.init()
-    model.addListeners(EvaluativeListener(dataSource, 1, InvocationType.EPOCH_END),ScoreIterationListener(1))
-    model.fit(dataSource, 100)
+    model.setListeners(EvaluativeListener(dataSource,1,InvocationType.EPOCH_END))
 
+    model.fit(dataSource,5)
     ModelSerializer.writeModel(model, "model.bin", true)
 /*
     val batchSize = 10
