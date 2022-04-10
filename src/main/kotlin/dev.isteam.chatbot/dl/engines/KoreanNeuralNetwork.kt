@@ -167,7 +167,7 @@ object KoreanNeuralNetwork {
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
 
         var conf = NeuralNetConfiguration.Builder()
-            .updater(RmsProp(1e-1))
+            .updater(RmsProp(1e-3))
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .list()
