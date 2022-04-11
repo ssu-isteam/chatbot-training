@@ -4,11 +4,16 @@ import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.BackpropType
 import org.deeplearning4j.nn.conf.GradientNormalization
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
+import org.deeplearning4j.nn.conf.RNNFormat
 import org.deeplearning4j.nn.conf.layers.DenseLayer
 import org.deeplearning4j.nn.conf.layers.LSTM
 import org.deeplearning4j.nn.conf.layers.OutputLayer
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
+import org.deeplearning4j.nn.conf.layers.misc.RepeatVector
+import org.deeplearning4j.nn.conf.layers.recurrent.TimeDistributed
 import org.deeplearning4j.nn.conf.layers.variational.VariationalAutoencoder
+import org.deeplearning4j.nn.graph.ComputationGraph
+import org.deeplearning4j.nn.layers.recurrent.TimeDistributedLayer
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
@@ -72,7 +77,28 @@ object KoreanNeuralNetwork {
             .build()
         return MultiLayerNetwork(modelConf)
     }
-
+    fun buildSeq2Seq(inputSize: Int, timeSteps:Int) : MultiLayerNetwork{
+        val conf = NeuralNetConfiguration.Builder()
+            .activation(Activation.TANH)
+            .updater(Adam(1e-2))
+            .list()
+            .layer(0, LSTM.Builder()
+                .nIn(inputSize)
+                .units(LSTM_LAYERSIZE)
+                .build())
+            .layer(1, RepeatVector.Builder()
+                .repetitionFactor(inputSize).build())
+            .layer(2, LSTM.Builder()
+                .units(LSTM_LAYERSIZE)
+                .build())
+            .layer(3, TimeDistributed(DenseLayer.Builder().units(1).build()))
+            .layer(4, RnnOutputLayer.Builder()
+                .nOut(inputSize)
+                .lossFunction(LossFunctions.LossFunction.MSE)
+                .build())
+            .build()
+        return MultiLayerNetwork(conf)
+    }
     fun buildDeepAutoEncoder(inputSize: Int): MultiLayerNetwork {
 
         val unit = 7
@@ -167,7 +193,7 @@ object KoreanNeuralNetwork {
     fun buildNeuralNetworkLSTM(inputSize: Int, outputSize: Int): MultiLayerNetwork {
 
         var conf = NeuralNetConfiguration.Builder()
-            .updater(RmsProp(1e-3))
+            .updater(Adam(1e-3))
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .list()
@@ -178,7 +204,7 @@ object KoreanNeuralNetwork {
             )
             .layer(1,DenseLayer.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH).build())
             .layer(
-                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.COSINE_PROXIMITY)
+                2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MEAN_ABSOLUTE_ERROR)
                     .activation(Activation.TANH)
                     .nIn(LSTM_LAYERSIZE).nOut(outputSize).build()
             )

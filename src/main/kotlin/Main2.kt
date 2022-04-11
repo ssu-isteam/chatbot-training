@@ -42,7 +42,7 @@ fun main2(args: Array<String>) {
     var tokenizerFactory = KoreanTokenizerFactory()
     tokenizerFactory.tokenPreProcessor = KoreanTokenPreprocessor()
 
-    var batchSize = 900
+    var batchSize = 1000
 
     logger.info("Starting fitting tfidf vectorizer....")
     /*
@@ -97,11 +97,10 @@ fun main2(args: Array<String>) {
         batchSize = batchSize
     )
 
-    val model = KoreanNeuralNetwork.buildNeuralNetworkLSTM(dataSource.inputColumns(), dataSource.inputColumns())
+    val model = KoreanNeuralNetwork.buildSeq2Seq(dataSource.inputColumns(),vec.layerSize)
     model.init()
     model.setListeners(EvaluativeListener(dataSource,1,InvocationType.EPOCH_END))
-
-    model.fit(dataSource,5)
+    model.fit(dataSource,50)
     ModelSerializer.writeModel(model, "model.bin", true)
 /*
     val batchSize = 10
