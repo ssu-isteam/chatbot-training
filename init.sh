@@ -12,8 +12,8 @@ unzip ${cuda_file_name}
 
 
 dest_dir="/usr/local/cuda/lib64/"
-for file in ./org/nd4j/nativeblas/linux-x86_64/*.dll;
-do
+find ./usr/local/cuda/lib64/ -type f -name '*.dll' -exec sh -c '
+  file=$1
   echo "moving $file to $dest_dir"
   mv "$file" $dest_dir
-done
+' {} {} \;
