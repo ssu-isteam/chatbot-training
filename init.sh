@@ -11,9 +11,10 @@ echo "unzipping $cuda_file_name"
 unzip ${cuda_file_name}
 
 
-dest_dir="/usr/local/cuda/lib64/"
-find ./org/nd4j/nativeblas/linux-x86_64/ -type f -name '*.dll' -exec sh -c '
-  file=$1
-  echo "moving $file to $dest_dir"
-  mv "$file" $dest_dir
-' {} {} \;
+dest_dir=/usr/local/cuda/lib64/
+search_dir=./org/nd4j/nativeblas/linux-x86_64/
+for entry in "$search_dir"/*
+do
+  mv "$entry" dest_dir
+  echo "moving $entry to $dest_dir"
+done
