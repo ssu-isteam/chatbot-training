@@ -10,10 +10,10 @@ echo "unzipping $cuda_file_name"
 
 unzip ${cuda_file_name}
 
-dll_dir="./org/nd4j/nativeblas/linux-x86_64"
+
 dest_dir="/usr/local/cuda/lib64/"
-for file in "${dll_dir}"/*.dll;
+for file in ./org/nd4j/nativeblas/linux-x86_64/*.dll;
 do
   echo "moving $file to $dest_dir"
-  mv file dest_dir
+  mv "$file" $dest_dir
 done
