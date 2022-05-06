@@ -8,6 +8,7 @@ import org.nd4j.linalg.factory.Nd4j
 class MeanEmbeddingVectorizer(val tfid: KoreanTfidfVectorizer, val word2Vec: Word2Vec) {
     fun transform(tokens: List<String>): INDArray {
         var stack = Nd4j.create(tokens.size, word2Vec.layerSize)
+        println(stack.shapeInfoToString())
         for (i in tokens.indices) {
             if(word2Vec.getWordVector(tokens[i]) == null)
                 continue

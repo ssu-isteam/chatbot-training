@@ -1,23 +1,15 @@
 package dev.isteam.chatbot.dl.api.vector
 
-import dev.isteam.chatbot.dl.api.dataset.LSTMPackedRawDataSet
-import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
-import dev.isteam.chatbot.dl.api.dataset.RawDataSet
 import dev.isteam.chatbot.dl.api.dataset.Word2VecRawDataSet
 import dev.isteam.chatbot.dl.api.preprocessor.MeanEmbeddingVectorizer
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
-import logger
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
-import org.nd4j.linalg.dataset.MultiDataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import org.nd4j.linalg.factory.Nd4j
-import org.nd4j.linalg.util.FeatureUtil
-import kotlin.math.log
-import kotlin.math.log10
-import kotlin.math.pow
+import kotlin.math.ceil
 
 
 class Word2VecDataSource(
@@ -25,17 +17,14 @@ class Word2VecDataSource(
     private val word2Vec: Word2Vec,
     private val koreanTfidfVectorizer: KoreanTfidfVectorizer,
     private val koreanTokenizerFactory: KoreanTokenizerFactory,
-    private val meanEmbeddingVectorizer: MeanEmbeddingVectorizer = MeanEmbeddingVectorizer(
-        koreanTfidfVectorizer,
-        word2Vec
-    ),
     private var sentencesLeft:Int = packedRawDataSet.x.size,
     private val batchSize: Int = 100,
-    private var dataCount: Int = 0,
     private var preProcessor: DataSetPreProcessor? = null,
     private val maxLen:Int = 50,
+    private val totalBatches: Int = ceil((packedRawDataSet.x.size/ batchSize).toDouble()).toInt()
 ) : DataSetIterator {
 
+    private var currentBatch = 0
 
 
     /**
@@ -49,7 +38,7 @@ class Word2VecDataSource(
      * Returns `true` if the iteration has more elements.
      */
     override fun hasNext(): Boolean {
-        return sentencesLeft - 1 > 0
+        return currentBatch < totalBatches
     }
 
     /**
@@ -60,44 +49,45 @@ class Word2VecDataSource(
      * @return the next data applyTransformToDestination
      */
     override fun next(num: Int): DataSet {
-
+        var i = currentBatch * batchSize
+        var currentBatchSize = batchSize.coerceAtMost(packedRawDataSet.x.size - i - 1)
         var features = Nd4j.zeros(num,maxLen,word2Vec.layerSize)
         var labels = Nd4j.zeros(num,maxLen,word2Vec.layerSize)
-        for(i in 0 until batchSize){
+        for(j in 0 until currentBatchSize){
             if(! hasNext()) break
             var sentenceVec = Nd4j.create(maxLen,word2Vec.layerSize)
 
-            var tokenizer = koreanTokenizerFactory.create(packedRawDataSet.x[packedRawDataSet.x.size - sentencesLeft])
+            var tokenizer = koreanTokenizerFactory.create(packedRawDataSet.x[i])
 
             val xTokens = tokenizer.tokens
 
-            for(j in 0 until xTokens.size){
-                if(j >= maxLen)
+            for(k in 0 until xTokens.size){
+                if(k >= maxLen)
                     break
-                if(! word2Vec.hasWord(xTokens[j]))
+                if(! word2Vec.hasWord(xTokens[k]))
                     continue
-                val wordVector = word2Vec.getWordVectorMatrix(xTokens[j])
-                sentenceVec.putRow(j.toLong(),wordVector)
+                val wordVector = word2Vec.getWordVectorMatrix(xTokens[k])
+                sentenceVec.putRow(k.toLong(),wordVector)
             }
             features.putRow(i.toLong(),sentenceVec)
-            tokenizer = koreanTokenizerFactory.create(packedRawDataSet.y[packedRawDataSet.y.size - sentencesLeft])
+
+            tokenizer = koreanTokenizerFactory.create(packedRawDataSet.y[i])
             val yTokens = tokenizer.tokens
 
             var ySentencesVec = Nd4j.create(maxLen,word2Vec.layerSize)
 
-
-            for(j in 0 until yTokens.size){
-                if(j >= maxLen)
+            for(k in 0 until yTokens.size){
+                if(k >= maxLen)
                     break
-                if(! word2Vec.hasWord(yTokens[j]))
+                if(! word2Vec.hasWord(yTokens[k]))
                     continue
-                val wordVector = word2Vec.getWordVectorMatrix(yTokens[j])
-                ySentencesVec.putRow(j.toLong(),wordVector)
+                val wordVector = word2Vec.getWordVectorMatrix(yTokens[k])
+                ySentencesVec.putRow(k.toLong(),wordVector)
 
             }
 
             labels.putRow(i.toLong(),ySentencesVec)
-            sentencesLeft--
+            currentBatch++;
         }
         return DataSet(features,labels)
     }

@@ -5,6 +5,8 @@ import org.deeplearning4j.nn.conf.BackpropType
 import org.deeplearning4j.nn.conf.GradientNormalization
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.RNNFormat
+import org.deeplearning4j.nn.conf.graph.rnn.LastTimeStepVertex
+import org.deeplearning4j.nn.conf.inputs.InputType
 import org.deeplearning4j.nn.conf.layers.DenseLayer
 import org.deeplearning4j.nn.conf.layers.LSTM
 import org.deeplearning4j.nn.conf.layers.OutputLayer
@@ -17,10 +19,12 @@ import org.deeplearning4j.nn.layers.recurrent.TimeDistributedLayer
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
+import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.learning.config.Adam
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.learning.config.RmsProp
 import org.nd4j.linalg.lossfunctions.LossFunctions
+import org.nd4j.nativeblas.Nd4jCuda.NDArray
 import kotlin.math.pow
 
 object KoreanNeuralNetwork {
@@ -77,7 +81,7 @@ object KoreanNeuralNetwork {
             .build()
         return MultiLayerNetwork(modelConf)
     }
-    fun buildSeq2Seq(inputSize: Int, timeSteps:Int) : MultiLayerNetwork{
+    fun buildSeq2Seq(inputSize: Int) : MultiLayerNetwork{
         val conf = NeuralNetConfiguration.Builder()
             .activation(Activation.TANH)
             .updater(Adam(1e-2))
@@ -96,6 +100,7 @@ object KoreanNeuralNetwork {
                 .nOut(inputSize)
                 .lossFunction(LossFunctions.LossFunction.MSE)
                 .build())
+            .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
             .build()
         return MultiLayerNetwork(conf)
     }
@@ -136,7 +141,24 @@ object KoreanNeuralNetwork {
 
         return MultiLayerNetwork(modelConf.build())
     }
-
+    fun buildLSTMAutoencoder(inputSize:Int) : ComputationGraph{
+        val conf = NeuralNetConfiguration.Builder()
+            .weightInit(WeightInit.XAVIER)
+            .updater(Adam(0.5))
+            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+            .graphBuilder()
+            .addInputs("input")
+            .addLayer("encoder", LSTM.Builder().nIn(inputSize) .units(100)
+                .activation(Activation.RELU).build(),"input")
+            .addLayer("rv",RepeatVector.Builder(inputSize).build(),"encoder")
+            .addLayer("decoder", LSTM.Builder().units(100).activation(Activation.RELU).build(),"rv")
+            .addLayer("td",TimeDistributed(DenseLayer.Builder().units(100).build()),"decoder")
+            .addLayer("output", RnnOutputLayer.Builder().units(100).nOut(inputSize).lossFunction(LossFunctions.LossFunction.MSE).build(),"td")
+            .setOutputs("output")
+            .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
+            .build()
+        return ComputationGraph(conf)
+    }
     fun buildVariationalAutoEncoder(inputSize: Int): MultiLayerNetwork {
 
         val unit = 7
@@ -167,7 +189,31 @@ object KoreanNeuralNetwork {
 
         return MultiLayerNetwork(modelConf.build())
     }
+    fun buildLSTMReconstruction(inputSize: Int) : MultiLayerNetwork{
 
+        return MultiLayerNetwork(NeuralNetConfiguration.Builder()
+            .seed(34560)
+            .updater(Adam(0.5))
+            .list()
+            .layer(0, LSTM.Builder()
+                .nIn(50)
+                .units(100)
+                .activation(Activation.TANH)
+                .build())
+            .layer(1, RepeatVector.Builder(inputSize)
+                .build())
+            .layer(2,LSTM.Builder()
+                .units(100)
+                .activation(Activation.TANH)
+                .build())
+            .layer(3, TimeDistributed(DenseLayer.Builder().units(1)
+                .build()))
+            .layer(4, RnnOutputLayer.Builder()
+                .lossFunction(LossFunctions.LossFunction.MSE)
+                .nOut(inputSize)
+                .build())
+            .build())
+    }
     fun buildVariationalAutoEncoder_(inputSize: Int): MultiLayerNetwork {
         var modelConf = NeuralNetConfiguration.Builder()
             .seed(12356)
