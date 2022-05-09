@@ -11,7 +11,7 @@ echo "unzipping $cuda_file_name"
 unzip ${cuda_file_name}
 
 
-dest_dir=/usr/local/cuda/lib64/
+dest_dir="/usr/local/cuda/lib64/"
 search_dir=./org/nd4j/nativeblas/linux-x86_64/
 for entry in "$search_dir"/*
 do
