@@ -12,9 +12,9 @@ unzip ${cuda_file_name}
 
 
 dest_dir="/usr/local/cuda/lib64/"
-search_dir=./org/nd4j/nativeblas/linux-x86_64/
+search_dir=./org/nd4j/nativeblas/linux-x86_64
 for entry in "$search_dir"/*
 do
-  mv "$entry" dest_dir
+  mv "$entry" "$dest_dir"
   echo "moving $entry to $dest_dir"
 done
