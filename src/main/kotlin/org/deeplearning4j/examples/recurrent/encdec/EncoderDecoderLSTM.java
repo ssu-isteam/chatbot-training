@@ -166,7 +166,7 @@ public class EncoderDecoderLSTM {
         updater.setRmsDecay(RMS_DECAY);
         NeuralNetConfiguration.Builder builder = new NeuralNetConfiguration.Builder();
         builder.updater(updater)
-                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).miniBatch(true).updater(Updater.RMSPROP)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).miniBatch(true)
                 .weightInit(WeightInit.XAVIER).gradientNormalization(GradientNormalization.RenormalizeL2PerLayer);
 
         GraphBuilder graphBuilder = builder.graphBuilder().backpropType(BackpropType.Standard)
@@ -293,14 +293,16 @@ public class EncoderDecoderLSTM {
                 .getLayer("decoder");
         Layer output = net.getLayer("output");
         GraphVertex mergeVertex = net.getVertex("merge");
-        /*
+
         INDArray thoughtVector = mergeVertex.getInputs()[1];
         for (int row = 0; row < ROW_SIZE; ++row) {
             mergeVertex.setInputs(decode, thoughtVector);
-            mergeVertex.doForward(false);
-            INDArray merged = mergeVertex.doForward(false);
-            INDArray activateDec = decoder.rnnTimeStep(merged);
-           INDArray out = output.activate(activateDec, false);
+
+            mergeVertex.doForward(false,null);
+            INDArray merged = mergeVertex.doForward(false,null);
+
+            INDArray activateDec = decoder.rnnTimeStep(merged,null);
+           INDArray out = output.activate(activateDec, false,null);
             double d = rnd.nextDouble();
             double sum = 0.0;
             int idx = -1;
@@ -323,7 +325,7 @@ public class EncoderDecoderLSTM {
         }
         System.out.println();
 
-         */
+
     }
 
     private void createDictionary() throws IOException, FileNotFoundException {

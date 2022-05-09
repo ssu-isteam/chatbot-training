@@ -21,7 +21,7 @@ class Word2VecDataSource(
     private val batchSize: Int = 100,
     private var preProcessor: DataSetPreProcessor? = null,
     private val maxLen:Int = 50,
-    private val totalBatches: Int = ceil((packedRawDataSet.x.size/ batchSize).toDouble()).toInt()
+    private val totalBatches: Int = ceil(packedRawDataSet.x.size.toDouble()/ batchSize).toInt()
 ) : DataSetIterator {
 
     private var currentBatch = 0
@@ -38,6 +38,7 @@ class Word2VecDataSource(
      * Returns `true` if the iteration has more elements.
      */
     override fun hasNext(): Boolean {
+
         return currentBatch < totalBatches
     }
 
@@ -49,6 +50,7 @@ class Word2VecDataSource(
      * @return the next data applyTransformToDestination
      */
     override fun next(num: Int): DataSet {
+
         var i = currentBatch * batchSize
         var currentBatchSize = batchSize.coerceAtMost(packedRawDataSet.x.size - i - 1)
         var features = Nd4j.zeros(num,maxLen,word2Vec.layerSize)

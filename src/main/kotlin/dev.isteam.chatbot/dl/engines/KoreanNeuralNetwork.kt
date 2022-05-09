@@ -5,17 +5,23 @@ import org.deeplearning4j.nn.conf.BackpropType
 import org.deeplearning4j.nn.conf.GradientNormalization
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.RNNFormat
+import org.deeplearning4j.nn.conf.distribution.OrthogonalDistribution
 import org.deeplearning4j.nn.conf.graph.rnn.LastTimeStepVertex
 import org.deeplearning4j.nn.conf.inputs.InputType
 import org.deeplearning4j.nn.conf.layers.DenseLayer
 import org.deeplearning4j.nn.conf.layers.LSTM
+import org.deeplearning4j.nn.conf.layers.LossLayer
 import org.deeplearning4j.nn.conf.layers.OutputLayer
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
 import org.deeplearning4j.nn.conf.layers.misc.RepeatVector
+import org.deeplearning4j.nn.conf.layers.recurrent.LastTimeStep
 import org.deeplearning4j.nn.conf.layers.recurrent.TimeDistributed
 import org.deeplearning4j.nn.conf.layers.variational.VariationalAutoencoder
+import org.deeplearning4j.nn.conf.preprocessor.RnnToFeedForwardPreProcessor
 import org.deeplearning4j.nn.graph.ComputationGraph
+import org.deeplearning4j.nn.layers.recurrent.LastTimeStepLayer
 import org.deeplearning4j.nn.layers.recurrent.TimeDistributedLayer
+import org.deeplearning4j.nn.modelimport.keras.KerasModelImport
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
@@ -190,29 +196,51 @@ object KoreanNeuralNetwork {
         return MultiLayerNetwork(modelConf.build())
     }
     fun buildLSTMReconstruction(inputSize: Int) : MultiLayerNetwork{
-
+        val lstm = LSTM.Builder()
+            .nIn(inputSize)
+            .nOut(100)
+            .activation(Activation.RELU)
+            .gateActivationFunction(Activation.SIGMOID)
+            .weightInit(WeightInit.XAVIER_UNIFORM)
+            .weightInit(OrthogonalDistribution(1.0))
+            .build()
+        lstm.rnnDataFormat = RNNFormat.NWC
         return MultiLayerNetwork(NeuralNetConfiguration.Builder()
             .seed(34560)
-            .updater(Adam(0.5))
+            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+            .updater(Adam(0.001))
             .list()
-            .layer(0, LSTM.Builder()
-                .nIn(50)
-                .units(100)
-                .activation(Activation.TANH)
-                .build())
+            .layer(0, LastTimeStep(lstm))
             .layer(1, RepeatVector.Builder(inputSize)
+                .nOut(0)
+                .nIn(100)
+                .weightInit(WeightInit.XAVIER)
+                .activation(Activation.SIGMOID).dataFormat(RNNFormat.NWC)
                 .build())
             .layer(2,LSTM.Builder()
-                .units(100)
-                .activation(Activation.TANH)
+                .nIn(50)
+                .nOut(100)
+                .activation(Activation.RELU)
+                .weightInit(OrthogonalDistribution(1.0))
+                .gateActivationFunction(Activation.SIGMOID)
                 .build())
-            .layer(3, TimeDistributed(DenseLayer.Builder().units(1)
-                .build()))
-            .layer(4, RnnOutputLayer.Builder()
+            .layer(3, DenseLayer.Builder()
+                .activation(Activation.IDENTITY)
+                .nIn(100)
+                .units(inputSize)
+                .weightInit(WeightInit.XAVIER_UNIFORM)
+                .units(inputSize)
+                .build())
+            .layer(4, LossLayer.Builder()
+                .activation(Activation.IDENTITY)
                 .lossFunction(LossFunctions.LossFunction.MSE)
-                .nOut(inputSize)
+                .weightInit(WeightInit.XAVIER)
                 .build())
+            .validateOutputLayerConfig(true)
+            .inputPreProcessor(3, RnnToFeedForwardPreProcessor(RNNFormat.NWC))
             .build())
+
+
     }
     fun buildVariationalAutoEncoder_(inputSize: Int): MultiLayerNetwork {
         var modelConf = NeuralNetConfiguration.Builder()
