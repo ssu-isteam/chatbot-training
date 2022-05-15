@@ -33,8 +33,10 @@ dependencies {
     //  implementation(group = "org.nd4j", name = "nd4j-cuda-10.0", version = nd4jVersion)
     //  implementation(group = "org.nd4j", name = "nd4j-cuda-10.0", version = nd4jVersion, classifier="windows-x86_64")
     implementation(group = "org.nd4j", name = "nd4j-cuda-11.0", version = nd4jVersion)
+    implementation(group = "org.nd4j", name = "nd4j-cuda-11.0", version = nd4jVersion, classifier = "linux-x86_64-cudnn")
+
     //implementation(group="org.deeplearning4j",name="deeplearning4j-cudnn",version=dl4jVersion)
-// https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-modelimport
+    // https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-modelimport
     implementation("org.deeplearning4j:deeplearning4j-modelimport:1.0.0-M2")
     //implementation(group = "org.deeplearning4j", name = "deeplearning4j-cuda-11.2", version = dl4jVersion)
     //implementation("org.bytedeco:cuda-platform-redist:11.2-8.1-1.5.5")
