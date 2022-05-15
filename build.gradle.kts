@@ -32,7 +32,7 @@ dependencies {
     //implementation(group = "org.nd4j", name = "nd4j-native-platform", version = nd4jVersion)
     //  implementation(group = "org.nd4j", name = "nd4j-cuda-10.0", version = nd4jVersion)
     //  implementation(group = "org.nd4j", name = "nd4j-cuda-10.0", version = nd4jVersion, classifier="windows-x86_64")
-    implementation(group = "org.nd4j", name = "nd4j-cuda-11.2", version = nd4jVersion)
+    implementation(group = "org.nd4j", name = "nd4j-cuda-11.0", version = nd4jVersion)
     //implementation(group="org.deeplearning4j",name="deeplearning4j-cudnn",version=dl4jVersion)
 // https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-modelimport
     implementation("org.deeplearning4j:deeplearning4j-modelimport:1.0.0-M2")

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-cuda_file_name="nd4j-cuda-11.2-1.0.0-M1.1-linux-x86_64.jar"
+cuda_file_name="nd4j-cuda-11.0-1.0.0-M1.1-linux-x86_64.jar"
 
 echo "downloading $cuda_file_name"
 
-wget https://repo1.maven.org/maven2/org/nd4j/nd4j-cuda-11.2/1.0.0-M1.1/${cuda_file_name}
+wget https://repo1.maven.org/maven2/org/nd4j/nd4j-cuda-11.0/1.0.0-M1.1/${cuda_file_name}
 
 echo "unzipping $cuda_file_name"
 
