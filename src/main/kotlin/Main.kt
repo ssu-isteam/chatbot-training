@@ -27,6 +27,7 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.net.URLClassLoader
 
 val logger: Logger = LoggerFactory.getLogger("LSTM")
 
@@ -51,6 +52,8 @@ private lateinit var corpus: PackedRawDataSet
 private const val dataPath = "개인및관계.json"
 fun main(args: Array<String>) {
 
+    val cudnn = "../../cuda-11.2-8.1-1.5.5-linux-ppc64le-redist.jar"
+    URLClassLoader(arrayOf(File(cudnn).toURI().toURL()),Thread.currentThread().contextClassLoader)
     createDictionary(dataPath)
 
     val model = createGraph()
