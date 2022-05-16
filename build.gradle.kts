@@ -5,6 +5,7 @@ val nd4jVersion:String by project
 plugins {
     kotlin("jvm") version "1.6.10"
     application
+
     //id("com.github.johnrengelman.shadow") version "5.0.0"
 }
 
@@ -60,6 +61,7 @@ tasks.withType<Jar>{
     manifest{
         attributes("Main-Class" to "MainKt")
     }
+    isZip64 = true
     from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
 application{
