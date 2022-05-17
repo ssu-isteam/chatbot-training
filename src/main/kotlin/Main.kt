@@ -5,6 +5,7 @@ import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
 import org.deeplearning4j.examples.recurrent.encdec.EncoderDecoderLSTM
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.BackpropType
@@ -52,8 +53,6 @@ private lateinit var corpus: PackedRawDataSet
 private const val dataPath = "개인및관계.json"
 fun main(args: Array<String>) {
 
-    val cudnn = "../../cuda-11.2-8.1-1.5.5-linux-ppc64le-redist.jar"
-    URLClassLoader(arrayOf(File(cudnn).toURI().toURL()),Thread.currentThread().contextClassLoader)
     createDictionary(dataPath)
 
     val model = createGraph()
@@ -88,6 +87,8 @@ fun createDictionary(path:String){
         .build()
 
     vec.fit()
+
+    WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
 }
 fun train(net:ComputationGraph, corpus:PackedRawDataSet, tokenizerFactory: KoreanTokenizerFactory, offset:Int){
     val logsIterator = CorpusIterator(word2Vec = vec, corpus = corpus, tokenizerFactory = tokenizerFactory, batchSize = BATCH_SIZE, batchesPerMacroBatch = MACRO_BATCH_SIZE, maxLenPerSentence = MAX_LEN)
