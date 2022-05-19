@@ -75,6 +75,8 @@ class CorpusIterator(
             decodeOneHot[2][0]  = 1.0
 
             rowPred.forEachIndexed { predIdx, pred ->
+                if(pred.toInt() >= dictSize)
+                    return@forEachIndexed
                 predOneHot[pred.toInt()][predIdx] = 1.0
                 if(predIdx < rowPred.size - 1){
                     decodeOneHot[pred.toInt()][predIdx + 1] = 1.0
