@@ -73,22 +73,25 @@ fun createDictionary(path:String){
 
     val rawDataSetIterator = RawDataSetIterator(corpus, RawDataSetIterator.IterativeType.QUESTION)
 
-    vec = Word2Vec.Builder()
-        .minWordFrequency(5)
-        .iterations(1)
-        .epochs(3)
-        .layerSize(50)
-        .batchSize(10000)
-        .workers(10)
-        .seed(42)
-        .windowSize(5)
-        .iterate(rawDataSetIterator)
-        .tokenizerFactory(tokenizerFactory)
-        .build()
+    if(! File("word2vec.bin").exists()){
+        vec = Word2Vec.Builder()
+            .minWordFrequency(5)
+            .iterations(1)
+            .epochs(3)
+            .layerSize(50)
+            .batchSize(10000)
+            .workers(10)
+            .seed(42)
+            .windowSize(5)
+            .iterate(rawDataSetIterator)
+            .tokenizerFactory(tokenizerFactory)
+            .build()
+        vec.fit()
+        WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
+    } else
+        vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"),true)
 
-    vec.fit()
 
-    WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
 }
 fun train(net:ComputationGraph, corpus:PackedRawDataSet, tokenizerFactory: KoreanTokenizerFactory, offset:Int){
     val logsIterator = CorpusIterator(word2Vec = vec, corpus = corpus, tokenizerFactory = tokenizerFactory, batchSize = BATCH_SIZE, batchesPerMacroBatch = MACRO_BATCH_SIZE, maxLenPerSentence = MAX_LEN)
