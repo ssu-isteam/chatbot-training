@@ -22,6 +22,9 @@ import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
+import org.deeplearning4j.ui.api.UIServer
+import org.deeplearning4j.ui.model.stats.StatsListener
+import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.learning.config.RmsProp
 import org.nd4j.linalg.lossfunctions.LossFunctions
@@ -94,6 +97,12 @@ fun createDictionary(path:String){
 
 }
 fun train(net:ComputationGraph, corpus:PackedRawDataSet, tokenizerFactory: KoreanTokenizerFactory, offset:Int){
+    val uiServer = UIServer.getInstance()
+    val storage = InMemoryStatsStorage()
+    uiServer.attach(storage)
+
+    net.setListeners(StatsListener(storage))
+
     val logsIterator = CorpusIterator(word2Vec = vec, corpus = corpus, tokenizerFactory = tokenizerFactory, batchSize = BATCH_SIZE, batchesPerMacroBatch = MACRO_BATCH_SIZE, maxLenPerSentence = MAX_LEN)
     for (epoch in 0 until EPOCH) {
         logger.info ("Epoch $epoch")
