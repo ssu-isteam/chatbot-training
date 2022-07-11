@@ -1,20 +1,10 @@
 package dev.isteam.chatbot.dl.api.tokenizer
 
-import dev.isteam.chatbot.dl.api.dataset.loader.MINDsLabDataSetLoader
-import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
-import dev.isteam.chatbot.dl.api.preprocessor.TextConverter
-import kr.co.shineware.nlp.komoran.constant.DEFAULT_MODEL
-import kr.co.shineware.nlp.komoran.core.Komoran
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.util.ModelSerializer
-import org.junit.jupiter.api.Test
-
-import org.junit.jupiter.api.Assertions.*
 import java.util.*
 
 internal class KoreanTokenizerFactoryTest {
 
-    @Test
+
     fun create() {
         /**
         var network = ModelSerializer.restoreMultiLayerNetwork("network.model")

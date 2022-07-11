@@ -1,11 +1,11 @@
 package dev.isteam.chatbot.dl.api.dataset.loader
 
-import org.junit.jupiter.api.Test
+
 
 
 internal class MINDsLabDataSetLoaderTest {
 
-    @Test
+
     fun load() {
         /**
         var path = "C:\\Users\\Singlerr\\Desktop\\ISTEAM\\AI 데이터 셋\\일반상식\\02_squad_질문_답변_제시문_말뭉치\\ko_wiki_v1_squad.json"
