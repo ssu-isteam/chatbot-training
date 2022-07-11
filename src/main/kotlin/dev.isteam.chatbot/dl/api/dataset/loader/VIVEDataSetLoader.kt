@@ -10,7 +10,7 @@ import org.json.JSONObject
 import java.io.FileInputStream
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
-import logger
+
 class VIVEDataSetLoader(private val paths: Array<String>) : DataSetLoader {
     @Deprecated("VIVEDataSetLoader does not support load() : PackedRawDataSet, use loadDialogues() : List<LSTMPackedRawDataSet>")
     override fun load(): CompletableFuture<PackedRawDataSet> {

@@ -43,7 +43,7 @@ public class EncoderDecoderLSTM {
      * and theoretically, given enough time and data, can deduce facts from raw text. Your mileage may vary. This particular network
      * architecture is based on AdditionRNN but changed to be used with a huge amount of possible tokens (10-40k) instead of just digits.
      *
-     * Use the get_data.sh script to download, extract and optimize the train data. It's been only tested on Linux, it could work on OS X or
+     * Use the get_data.sh script to download, extract and optimize the dev.isteam.chatbot.train data. It's been only tested on Linux, it could work on OS X or
      * even on Windows 10 in the Ubuntu shell.
      *
      * Special tokens used:
@@ -81,7 +81,7 @@ public class EncoderDecoderLSTM {
      * (or <go> for the very first step). These two vectors are simply concatenated by the merge vertex. The decoder's output goes to the
      * softmax layer and that's it.
      *
-     * The test phase is much more tricky. We don't know the decoder input because we don't know the output yet (unlike in the train phase),
+     * The test phase is much more tricky. We don't know the decoder input because we don't know the output yet (unlike in the dev.isteam.chatbot.train phase),
      * it could be anything. So we can't use methods like outputSingle() and have to do some manual work. Actually, we can but it would
      * require full restarts of the entire process, it's super slow and ineffective.
      *

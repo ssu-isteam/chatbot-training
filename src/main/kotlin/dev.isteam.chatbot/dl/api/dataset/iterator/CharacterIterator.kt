@@ -3,8 +3,6 @@ package dev.isteam.chatbot.dl.api.dataset.iterator
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator
 import java.nio.charset.Charset
 import java.io.IOException
-import java.lang.IllegalArgumentException
-import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
@@ -12,7 +10,7 @@ import java.io.File
 import java.lang.UnsupportedOperationException
 import java.nio.file.Files
 import java.util.*
-import logger
+import dev.isteam.chatbot.logger
 /** A simple DataSetIterator for use in the GravesLSTMCharModellingExample.
  * Given a text file and a few options, generate feature vectors and labels for training,
  * where we want to predict the next character in the sequence.<br></br>

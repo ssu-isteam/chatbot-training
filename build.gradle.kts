@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 val dl4jVersion:String by project
 val nd4jVersion:String by project
@@ -5,11 +6,8 @@ val nd4jVersion:String by project
 plugins {
     kotlin("jvm") version "1.6.10"
     application
-
-    //id("com.github.johnrengelman.shadow") version "5.0.0"
+    id("com.github.johnrengelman.shadow") version "5.0.0"
 }
-
-
 
 group = "me.singlerr"
 version = "1.0-SNAPSHOT"
@@ -24,7 +22,6 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    testImplementation(kotlin("test"))
     implementation(group = "me.tongfei", name = "progressbar", version = "0.9.3")
     implementation(group = "com.github.shin285", name = "KOMORAN", version = "3.3.4")
     implementation(group = "org.json", name = "json", version = "20211205")
@@ -42,26 +39,21 @@ dependencies {
     implementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.7.0")
     implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.2.6")
 }
-
-tasks.test {
-    useJUnitPlatform()
+project.setProperty("mainClassName","dev.isteam.chatbot.MainKt")
+tasks.withType<ShadowJar>{
+    isZip64 = true
+    archiveClassifier.set("")
 }
 group = "dev.isteam"
 version = "1.0-SNAPSHOT"
 description = rootProject.name
 java.sourceCompatibility = JavaVersion.VERSION_11
-
-tasks.withType<Jar>{
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-    manifest{
-        attributes("Main-Class" to "MainKt")
-    }
-    isZip64 = true
-    from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+tasks.build{
+    dependsOn("shadowJar")
 }
+/*
 application{
     mainClass.set("dev.isteam.chatbot.Main")
 }
-tasks{
 
-}
+ */

@@ -1,10 +1,11 @@
+package dev.isteam.chatbot
+
 import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.iterator.CorpusIterator
 import dev.isteam.chatbot.dl.api.dataset.iterator.RawDataSetIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
-import org.deeplearning4j.examples.recurrent.encdec.EncoderDecoderLSTM
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
@@ -19,9 +20,7 @@ import org.deeplearning4j.nn.conf.layers.EmbeddingLayer
 import org.deeplearning4j.nn.conf.layers.LSTM
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
 import org.deeplearning4j.nn.graph.ComputationGraph
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.ui.api.UIServer
 import org.deeplearning4j.ui.model.stats.StatsListener
 import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage
@@ -31,7 +30,6 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.net.URLClassLoader
 
 val logger: Logger = LoggerFactory.getLogger("LSTM")
 
@@ -59,7 +57,7 @@ fun main(args: Array<String>) {
     createDictionary(dataPath)
 
     val model = createGraph()
-    train(model,corpus,tokenizerFactory,32)
+    train(model, corpus, tokenizerFactory,32)
 }
 
 fun createDictionary(path:String){
