@@ -68,7 +68,7 @@ fun createDictionary(path:String){
 
     val packedRawDataSet = viveDataSetLoader.loadDialogues().get()[0]
 
-    corpus = PackedRawDataSet(packedRawDataSet.dialogues.flatMap { it.rawDataSets }.toMutableList())
+    corpus = PackedRawDataSet(packedRawDataSet.dialogues.flatMap { it.rawDataSets }.toMutableList().subList(0,1000))
 
 
 
@@ -91,8 +91,8 @@ fun createDictionary(path:String){
             .tokenizerFactory(tokenizerFactory)
             .build()
         vec.fit()
-
-        WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
+        WordVectorSerializer.writeWord2Vec(vec,File("word2vec.bin").outputStream())
+        //WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
     } else
         vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"),true)
 
@@ -107,7 +107,6 @@ fun setFinalField(field: Field, newValue: Any) {
     field.set(null, newValue)
 }
 fun train(net:ComputationGraph, corpus:PackedRawDataSet, tokenizerFactory: KoreanTokenizerFactory, offset:Int){
-    setFinalField(VertxUIServer::class.java.getDeclaredField("DEFAULT_UI_PORT"),9001)
     val uiServer = UIServer.getInstance()
     val storage = InMemoryStatsStorage()
     uiServer.attach(storage)
