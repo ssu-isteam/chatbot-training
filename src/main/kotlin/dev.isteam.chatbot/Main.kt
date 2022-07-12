@@ -89,7 +89,8 @@ fun createDictionary(path:String){
             .tokenizerFactory(tokenizerFactory)
             .build()
         vec.fit()
-        WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
+
+        WordVectorSerializer.writeWord2Vec(vec,File("word2vec.bin").outputStream())
     } else
         vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"),true)
 

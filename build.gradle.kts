@@ -1,4 +1,4 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 
 val dl4jVersion:String by project
 val nd4jVersion:String by project
@@ -7,7 +7,7 @@ val externalLibs:String by project
 plugins {
     kotlin("jvm") version "1.6.10"
     application
-    id("com.github.johnrengelman.shadow") version "5.0.0"
+    //id("com.github.johnrengelman.shadow") version "5.0.0"
 }
 
 group = "me.singlerr"
@@ -31,14 +31,14 @@ dependencies {
     //  implementation(group = "org.nd4j", name = "nd4j-cuda-10.0", version = nd4jVersion)
     //  implementation(group = "org.nd4j", name = "nd4j-cuda-10.0", version = nd4jVersion, classifier="windows-x86_64")
     implementation(group = "org.nd4j", name = "nd4j-cuda-11.2", version = nd4jVersion)
-    implementation("org.deeplearning4j:deeplearning4j-modelimport:1.0.0-M2")
     implementation(group = "org.deeplearning4j", name = "deeplearning4j-ui", version = dl4jVersion)
-    implementation(group = "org.deeplearning4j", name = "deeplearning4j-cuda-11.2", version = dl4jVersion)
+    implementation(group = "org.deeplearning4j", name = "deeplearning4j-cuda-11.2", version = nd4jVersion)
     implementation(group = "org.deeplearning4j", name = "deeplearning4j-core", version = dl4jVersion)
     implementation(group = "org.deeplearning4j", name = "deeplearning4j-nlp", version = dl4jVersion)
     implementation(group = "org.junit.jupiter", name = "junit-jupiter", version = "5.7.0")
     implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.2.6")
 }
+/*
 project.setProperty("mainClassName", "dev.isteam.chatbot.MainKt")
 
 tasks.withType<ShadowJar>{
@@ -48,16 +48,17 @@ tasks.withType<ShadowJar>{
 tasks.build{
     dependsOn("shadowJar")
 }
-/*
+ */
+
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     isZip64 = true
     manifest {
         attributes("Main-Class" to "dev.isteam.chatbot.MainKt")
     }
+    exclude("META-INF/*.RSA","META-INF/*.SF","META-INF/*.DSA")
     from(configurations.compileClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }
- */
 /*
 tasks.create("copyAllExternalLibs") {
     externalLib.forEach { lib ->
