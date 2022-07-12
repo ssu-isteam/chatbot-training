@@ -7,7 +7,6 @@ import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.models.sequencevectors.interfaces.VectorsListener
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.BackpropType
@@ -22,6 +21,7 @@ import org.deeplearning4j.nn.conf.layers.LSTM
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
 import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.nn.weights.WeightInit
+import org.deeplearning4j.ui.VertxUIServer
 import org.deeplearning4j.ui.api.UIServer
 import org.deeplearning4j.ui.model.stats.StatsListener
 import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage
@@ -31,6 +31,8 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
 
 val logger: Logger = LoggerFactory.getLogger("LSTM")
 
@@ -96,7 +98,16 @@ fun createDictionary(path:String){
 
 
 }
+
+fun setFinalField(field: Field, newValue: Any) {
+    field.isAccessible = true
+    val modifiersField: Field = Field::class.java.getDeclaredField("modifiers")
+    modifiersField.isAccessible = true
+    modifiersField.setInt(field, field.modifiers and Modifier.FINAL.inv())
+    field.set(null, newValue)
+}
 fun train(net:ComputationGraph, corpus:PackedRawDataSet, tokenizerFactory: KoreanTokenizerFactory, offset:Int){
+    setFinalField(VertxUIServer::class.java.getDeclaredField("DEFAULT_UI_PORT"),9001)
     val uiServer = UIServer.getInstance()
     val storage = InMemoryStatsStorage()
     uiServer.attach(storage)
