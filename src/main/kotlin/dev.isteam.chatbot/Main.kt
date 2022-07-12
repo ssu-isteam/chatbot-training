@@ -66,7 +66,7 @@ fun createDictionary(path:String){
 
     val packedRawDataSet = viveDataSetLoader.loadDialogues().get()[0]
 
-    corpus = PackedRawDataSet(packedRawDataSet.dialogues.flatMap { it.rawDataSets }.toMutableList().subList(0,1000))
+    corpus = PackedRawDataSet(packedRawDataSet.dialogues.flatMap { it.rawDataSets }.toMutableList())
 
 
 
@@ -90,7 +90,7 @@ fun createDictionary(path:String){
             .build()
         vec.fit()
 
-        WordVectorSerializer.writeWord2Vec(vec,File("word2vec.bin").outputStream())
+        WordVectorSerializer.writeWord2VecModel(vec,"word2vec.bin")
     } else
         vec = WordVectorSerializer.readWord2VecModel(File("word2vec.bin"),true)
 
