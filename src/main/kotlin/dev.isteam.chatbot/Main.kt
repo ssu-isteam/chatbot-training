@@ -66,7 +66,7 @@ fun createDictionary(path:String){
 
     val packedRawDataSet = viveDataSetLoader.loadDialogues().get()[0]
 
-    corpus = PackedRawDataSet(packedRawDataSet.dialogues.flatMap { it.rawDataSets }.toMutableList())
+    corpus = PackedRawDataSet(packedRawDataSet.dialogues.flatMap { it.rawDataSets }.toMutableList().subList(0,10))
 
 
 
