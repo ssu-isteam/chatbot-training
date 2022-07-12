@@ -77,9 +77,9 @@ fun createDictionary(path:String){
 
     if(! File("word2vec.bin").exists()){
         vec = Word2Vec.Builder()
-            .minWordFrequency(5)
+            .minWordFrequency(10)
             .iterations(1)
-            .epochs(1)
+            .epochs(3)
             .layerSize(50)
             .batchSize(10000)
             .workers(1000)
