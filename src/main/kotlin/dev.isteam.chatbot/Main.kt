@@ -109,7 +109,7 @@ fun main(args: Array<String>) {
 
         word2Vec.fit()
         word2Vec.buildVocab()
-        WordVectorSerializer.writeWord2Vec(word2Vec, word2VecFile.outputStream())
+        WordVectorSerializer.writeWord2VecModel(word2Vec, word2VecFile.outputStream())
     }
 
     /***
