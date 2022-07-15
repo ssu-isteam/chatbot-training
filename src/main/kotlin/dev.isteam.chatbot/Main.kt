@@ -61,15 +61,20 @@ private const val WORKERS = 100
 private const val TBPTT_SIZE = 25
 private const val LEARNING_RATE = 1e-1
 private const val RMS_DECAY = 0.95
-private const val HIDDEN_LAYER_WIDTH = 512
 
+
+/***
+ * Network settings
+ */
 private const val EMBEDDING_WIDTH = 128
+private const val HIDDEN_LAYER_WIDTH = 512
 private const val BATCH_SIZE = 32
 private const val MACRO_BATCH_SIZE = 20
 private const val MAX_LEN = 40
 private const val EPOCH = 20
 private const val MODEL_PATH = "model.h5"
 private val word2VecFile = File("word2vec.bin")
+
 
 
 private const val dataPath = "개인및관계.json"
@@ -94,6 +99,7 @@ fun main(args: Array<String>) {
     val word2Vec:Word2Vec
 
     if(word2VecFile.exists()){
+
         word2Vec = WordVectorSerializer.readWord2VecModel(word2VecFile,true)
     }else{
         word2Vec = Word2Vec.Builder()
@@ -131,18 +137,23 @@ fun main(args: Array<String>) {
         .graphBuilder()
         .addInputs("encoderInput","decoderInput")
         .setInputTypes(InputType.recurrent(WINDOW_SIZE.toLong(),srcMaxLen.toLong()), InputType.recurrent(tarMaxLen.toLong()))
-        .addLayer("encoder",LSTM.Builder().nOut(tarMaxLen).build(),"encoderInput")
-        .addLayer("decoder",LSTM.Builder().nOut(tarMaxLen) .build(),"decoderInput","encoder")
-        .addLayer("outputLayer", RnnOutputLayer.Builder().nIn(tarMaxLen) .lossFunction(LossFunctions.LossFunction.SQUARED_LOSS) .activation(Activation.TANH).nOut(tarMaxLen.toLong()).build(),"decoder")
-        .inputPreProcessor("decoder",DecoderInputPreProcessor())
+        .addLayer("inputLayer",EmbeddingLayer.Builder().nOut(EMBEDDING_WIDTH).build(),"encoderInput")
+        .addLayer("encoder",LSTM.Builder().activation(Activation.TANH).nOut(HIDDEN_LAYER_WIDTH).build(),"inputLayer")
+        .addVertex("outputOfLSTM",LastTimeStepVertex("encoderInput"),"encoder")
+        .addVertex("inputOfDecoder",DuplicateToTimeSeriesVertex("decoderInput"),"outputOfLSTM")
+        .addVertex("mergeInputAndOutput",MergeVertex(),"decoderInput","inputOfDecoder")
+        .addLayer("decoder",LSTM.Builder().activation(Activation.TANH) .build(),"merge")
+        .addLayer("outputLayer", RnnOutputLayer.Builder().nOut(tarMaxLen.toLong()).build(),"decoder")
         .setOutputs("outputLayer")
         .build()
+
 
     val model = ComputationGraph(modelConfig)
 
     model.init()
 
 
+    /*
     for(j in 0..EPOCH){
         for(i in 0..srcCorpus.size){
             val src = srcCorpus[i].question
@@ -159,6 +170,8 @@ fun main(args: Array<String>) {
             println(model.score())
         }
     }
+
+     */
 
 
 
