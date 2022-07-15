@@ -21,18 +21,11 @@ class VIVEDataSetLoader(private val paths: Array<String>) : DataSetLoader {
 
     fun loadDialogues() : CompletableFuture<List<LSTMPackedRawDataSet>>{
         return CompletableFuture.supplyAsync{
-            var pb = ProgressBarBuilder().setTaskName("Reading files")
-                .setInitialMax(paths.size.toLong())
-                .setStyle(ProgressBarStyle.ASCII)
-                .setSpeedUnit(ChronoUnit.SECONDS)
-                .build()
-
             var dataSets = arrayListOf<LSTMPackedRawDataSet>()
 
             for (path in paths) {
                 var (dialogues, max) = load(path)
                 dataSets.add(LSTMPackedRawDataSet(max, dialogues))
-                pb.step()
             }
             return@supplyAsync dataSets
         }

@@ -10,6 +10,7 @@ import org.nd4j.linalg.dataset.api.iterator.MultiDataSetIterator
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.indexing.INDArrayIndex
 import org.nd4j.linalg.indexing.NDArrayIndex
+import java.util.*
 import kotlin.math.ceil
 
 class CorpusIterator(
@@ -40,16 +41,18 @@ class CorpusIterator(
     override fun next(num: Int): MultiDataSet {
         var i = currentBatch * batchSize
         var currentBatchSize = batchSize.coerceAtMost(corpus.size() - i - 1)
-
         val input = Nd4j.zeros(currentBatchSize, 1, maxLenPerSentence)
         val prediction = Nd4j.zeros(currentBatchSize, dictSize, maxLenPerSentence)
         val decode = Nd4j.zeros(currentBatchSize, dictSize, maxLenPerSentence)
         val inputMask = Nd4j.zeros(currentBatchSize, maxLenPerSentence)
         val predictionMask = Nd4j.zeros(currentBatchSize, maxLenPerSentence)
 
+
+
         for (j in 0 until currentBatchSize) {
             val rowIn = getIndices(corpus[i]).reversed()
             val rowPred = getIndices(corpus[i + 1])
+
             rowPred.add(1.0)
 
             input.put(
@@ -94,6 +97,8 @@ class CorpusIterator(
                     NDArrayIndex.interval(0, rowPred.size)
                 ), Nd4j.create(decodeOneHot)
             )
+
+
         }
         return org.nd4j.linalg.dataset.MultiDataSet(
             arrayOf(input, decode),

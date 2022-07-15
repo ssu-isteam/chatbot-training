@@ -1,4 +1,4 @@
-
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 
 val dl4jVersion:String by project
 val nd4jVersion:String by project
@@ -7,7 +7,7 @@ val externalLibs:String by project
 plugins {
     kotlin("jvm") version "1.6.10"
     application
-    //id("com.github.johnrengelman.shadow") version "5.0.0"
+    id("com.github.johnrengelman.shadow") version "5.0.0"
 }
 
 group = "me.singlerr"
@@ -19,6 +19,7 @@ repositories {
         url = uri("https://jitpack.io")
     }
 }
+
 
 dependencies {
     implementation(kotlin("stdlib"))
@@ -50,6 +51,9 @@ tasks.build{
 }
  */
 
+tasks.withType<ShadowJar>{
+    dependencies {  }
+}
 tasks.withType<Jar> {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     isZip64 = true
