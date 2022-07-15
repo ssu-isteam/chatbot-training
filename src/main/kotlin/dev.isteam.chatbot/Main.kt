@@ -73,6 +73,10 @@ private const val MACRO_BATCH_SIZE = 20
 private const val MAX_LEN = 40
 private const val EPOCH = 20
 private const val MODEL_PATH = "model.h5"
+
+
+private val lookUpTableFile = File("lookUpTable.bin")
+private val vocabCacheFile = File("vocabCache.bin")
 private val word2VecFile = File("word2vec.bin")
 
 
@@ -99,8 +103,7 @@ fun main(args: Array<String>) {
     val word2Vec:Word2Vec
 
     if(word2VecFile.exists()){
-
-        word2Vec = WordVectorSerializer.readWord2VecModel(word2VecFile,true)
+        word2Vec = WordVectorSerializer.readWord2VecModel(word2VecFile,false)
     }else{
         word2Vec = Word2Vec.Builder()
             .allowParallelTokenization(true)
@@ -115,6 +118,8 @@ fun main(args: Array<String>) {
 
         word2Vec.fit()
         word2Vec.buildVocab()
+        WordVectorSerializer.writeVocabCache(word2Vec.vocab, vocabCacheFile)
+        WordVectorSerializer.writeLookupTable(word2Vec.lookupTable, lookUpTableFile)
         WordVectorSerializer.writeWord2VecModel(word2Vec, word2VecFile.outputStream())
     }
 
