@@ -6,6 +6,7 @@ import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
+import org.deeplearning4j.models.word2vec.VocabWord
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.api.MaskState
 import org.deeplearning4j.nn.conf.InputPreProcessor
@@ -20,6 +21,10 @@ import org.deeplearning4j.nn.conf.layers.LSTM
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
 import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.nn.workspace.LayerWorkspaceMgr
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener
+import org.deeplearning4j.ui.api.UIServer
+import org.deeplearning4j.ui.model.stats.StatsListener
+import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage
 import org.nd4j.common.primitives.Pair
 import org.nd4j.enums.PadMode
 import org.nd4j.linalg.activations.Activation
@@ -72,7 +77,7 @@ fun main(args: Array<String>) {
 
     val rawDataSets =
         VIVEDataSetLoader(arrayOf(dataPath)).loadDialogues().get().flatMap { it.dialogues }.flatMap { it.rawDataSets }
-            .toMutableList().subList(0, 1000)
+            .toMutableList()
 
     val rawDataSetIterator =
         RawDataSetIterator(PackedRawDataSet(rawDataSets = rawDataSets), RawDataSetIterator.IterativeType.QUESTION)
@@ -88,7 +93,22 @@ fun main(args: Array<String>) {
     val word2Vec: Word2Vec
 
     if (word2VecFile.exists()) {
-        word2Vec = WordVectorSerializer.readWord2VecModel(word2VecFile, true)
+        word2Vec = Word2Vec.Builder()
+            .allowParallelTokenization(true)
+            .tokenizerFactory(tokenizerFactory)
+            .iterate(rawDataSetIterator)
+            .batchSize(WORD2VEC_BATCH_SIZE)
+            .epochs(WORD2VEC_EPOCH)
+            .windowSize(WINDOW_SIZE)
+            .layerSize(LAYER_SIZE)
+            .workers(WORKERS)
+            .build()
+
+        val vocabCache = WordVectorSerializer.readVocabCache(vocabCacheFile)
+        val lookUpTable = WordVectorSerializer.readLookupTable<VocabWord>(lookUpTableFile)
+
+        word2Vec.setVocab(vocabCache)
+        word2Vec.setLookupTable(lookUpTable)
     } else {
         word2Vec = Word2Vec.Builder()
             .allowParallelTokenization(true)
@@ -102,6 +122,9 @@ fun main(args: Array<String>) {
             .build()
 
         word2Vec.fit()
+        WordVectorSerializer.writeLookupTable(word2Vec.lookupTable, lookUpTableFile)
+        WordVectorSerializer.writeVocabCache(word2Vec.vocab, vocabCacheFile)
+        WordVectorSerializer.writeWord2VecModel(word2Vec, word2VecFile)
      //   WordVectorSerializer.writeWord2VecModel(word2Vec, word2VecFile)
     }
 
@@ -127,7 +150,6 @@ fun main(args: Array<String>) {
             InputType.recurrent(srcMaxLen.toLong()),
             InputType.recurrent(tarMaxLen.toLong())
         )
-        //.addLayer("inputLayer", EmbeddingLayer.Builder().nIn(srcMaxLen).nOut(EMBEDDING_WIDTH).build(), "encoderInput")
         .addLayer("encoder", LSTM.Builder().activation(Activation.TANH).nOut(HIDDEN_LAYER_WIDTH).build(), "encoderInput")
         .addVertex("outputOfLSTM", LastTimeStepVertex("encoderInput"), "encoder")
         .addVertex("inputOfDecoder", DuplicateToTimeSeriesVertex("decoderInput"), "outputOfLSTM")
@@ -146,24 +168,27 @@ fun main(args: Array<String>) {
 
     model.init()
 
+    val uiServer = UIServer.getInstance()
+    val storage = InMemoryStatsStorage()
+
+    uiServer.attach(storage)
+
+    model.setListeners(StatsListener(storage))
 
     for (j in 0..EPOCH) {
         var encoderInput = Nd4j.zeros(BATCH_SIZE, srcMaxLen, WINDOW_SIZE)
-        var encoderMask = Nd4j.ones(BATCH_SIZE, srcMaxLen)
+        var encoderMask = Nd4j.ones(BATCH_SIZE, WINDOW_SIZE)
         var decoderInput = Nd4j.zeros(BATCH_SIZE, tarMaxLen, WINDOW_SIZE)
-        var decoderMask = Nd4j.zeros(BATCH_SIZE, tarMaxLen)
-        for (i in 0..srcCorpus.size) {
+        var decoderMask = Nd4j.zeros(BATCH_SIZE, WINDOW_SIZE)
+        for (i in srcCorpus.indices) {
             if (i % BATCH_SIZE == 0 && i != 0) {
                 val multiDataSet = MultiDataSet(arrayOf(encoderInput,decoderInput), arrayOf(decoderInput), arrayOf(encoderMask,decoderMask),
                     arrayOf(decoderMask))
-
-                println(encoderInput.shapeInfoToString())
-
                 model.fit(multiDataSet)
                 encoderInput = Nd4j.zeros(BATCH_SIZE, srcMaxLen, WINDOW_SIZE)
-                encoderMask = Nd4j.ones(BATCH_SIZE, srcMaxLen)
+                encoderMask = Nd4j.ones(BATCH_SIZE, WINDOW_SIZE)
                 decoderInput = Nd4j.zeros(BATCH_SIZE, tarMaxLen, WINDOW_SIZE)
-                decoderMask = Nd4j.zeros(BATCH_SIZE, tarMaxLen)
+                decoderMask = Nd4j.zeros(BATCH_SIZE, WINDOW_SIZE)
             }
 
             val src = srcCorpus[i].question
@@ -175,7 +200,7 @@ fun main(args: Array<String>) {
 
             encoderInput.putRow((i % BATCH_SIZE).toLong(),srcVector)
             decoderInput.putRow((i % BATCH_SIZE).toLong(),tarVector)
-            decoderMask.putScalar(intArrayOf(i % BATCH_SIZE,tarMaxLen - 1),1)
+            decoderMask.putScalar(intArrayOf(i % BATCH_SIZE, WINDOW_SIZE - 1),1)
 
         }
     }
