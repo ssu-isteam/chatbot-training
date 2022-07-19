@@ -62,6 +62,8 @@ private const val EPOCH = 5
 private const val MODEL_PATH = "model.h5"
 
 
+private val modelFile = File("model.bin")
+
 private val lookUpTableFile = File("lookUpTable.bin")
 private val vocabCacheFile = File("vocabCache.bin")
 private val word2VecFile = File("word2vec.bin")
@@ -200,6 +202,8 @@ fun main(args: Array<String>) {
 
         }
     }
+
+    model.save(modelFile)
 
 
 }
