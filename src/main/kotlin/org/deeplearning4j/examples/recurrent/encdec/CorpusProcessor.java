@@ -1,27 +1,17 @@
 package org.deeplearning4j.examples.recurrent.encdec;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CorpusProcessor {
     public static final String SPECIALS = "!\"#$;%^:?*()[]{}<>«»,.–—=+…";
-    private Set<String> dictSet = new HashSet<>();
-    private Map<String, Double> freq = new HashMap<>();
+    private final Set<String> dictSet = new HashSet<>();
+    private final Map<String, Double> freq = new HashMap<>();
     private Map<String, Double> dict = new HashMap<>();
-    private boolean countFreq;
-    private InputStream is;
-    private int rowSize;
+    private final boolean countFreq;
+    private final InputStream is;
+    private final int rowSize;
 
     public CorpusProcessor(String filename, int rowSize, boolean countFreq) throws FileNotFoundException {
         this(new FileInputStream(filename), rowSize, countFreq);
@@ -148,10 +138,7 @@ public class CorpusProcessor {
                 wordIdxs.add(0.0);
             }
         }
-        if (!wordIdxs.isEmpty()) {
-            return true;
-        }
-        return false;
+        return !wordIdxs.isEmpty();
     }
 
 }

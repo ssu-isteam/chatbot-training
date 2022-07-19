@@ -2,14 +2,18 @@ package dev.isteam.chatbot.dl.api.vector
 
 import dev.isteam.chatbot.dl.api.preprocessor.MeanEmbeddingVectorizer
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizer
-import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.api.MultiDataSet
 import org.nd4j.linalg.dataset.api.MultiDataSetPreProcessor
 import org.nd4j.linalg.dataset.api.iterator.MultiDataSetIterator
-import org.nd4j.linalg.factory.Nd4j
 
-class Seq2SeqDataSource(private val corpus:List<KoreanTokenizer>,private val meanEmbeddingVectorizer: MeanEmbeddingVectorizer,private val batchSize:Int,private val batchesPerMacroBatch:Int, private val maxTokenLen:Int) : MultiDataSetIterator {
-    private var currentBatch:Int = 0
+class Seq2SeqDataSource(
+    private val corpus: List<KoreanTokenizer>,
+    private val meanEmbeddingVectorizer: MeanEmbeddingVectorizer,
+    private val batchSize: Int,
+    private val batchesPerMacroBatch: Int,
+    private val maxTokenLen: Int
+) : MultiDataSetIterator {
+    private var currentBatch: Int = 0
     override fun remove() {
         TODO("Not yet implemented")
     }

@@ -5,8 +5,8 @@ import dev.isteam.chatbot.dl.api.dataset.iterator.RawDataSetIterator
 import dev.isteam.chatbot.dl.api.dataset.loader.VIVEDataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
+import org.deeplearning4j.models.embeddings.inmemory.InMemoryLookupTable
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
-import org.deeplearning4j.models.word2vec.VocabWord
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.api.MaskState
 import org.deeplearning4j.nn.conf.InputPreProcessor
@@ -15,27 +15,25 @@ import org.deeplearning4j.nn.conf.graph.MergeVertex
 import org.deeplearning4j.nn.conf.graph.rnn.DuplicateToTimeSeriesVertex
 import org.deeplearning4j.nn.conf.graph.rnn.LastTimeStepVertex
 import org.deeplearning4j.nn.conf.inputs.InputType
-import org.deeplearning4j.nn.conf.layers.DenseLayer
-import org.deeplearning4j.nn.conf.layers.EmbeddingLayer
 import org.deeplearning4j.nn.conf.layers.LSTM
 import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
 import org.deeplearning4j.nn.graph.ComputationGraph
 import org.deeplearning4j.nn.workspace.LayerWorkspaceMgr
-import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.deeplearning4j.ui.api.UIServer
 import org.deeplearning4j.ui.model.stats.StatsListener
 import org.deeplearning4j.ui.model.storage.InMemoryStatsStorage
 import org.nd4j.common.primitives.Pair
-import org.nd4j.enums.PadMode
 import org.nd4j.linalg.activations.Activation
 import org.nd4j.linalg.api.ndarray.INDArray
-import org.nd4j.linalg.api.ops.impl.transforms.Pad
 import org.nd4j.linalg.dataset.MultiDataSet
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.learning.config.AdaGrad
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.isAccessible
 
 val logger: Logger = LoggerFactory.getLogger("LSTM")
 
@@ -77,8 +75,7 @@ fun main(args: Array<String>) {
 
     val rawDataSets =
         VIVEDataSetLoader(arrayOf(dataPath)).loadDialogues().get().flatMap { it.dialogues }.flatMap { it.rawDataSets }
-            .toMutableList()
-
+            .toMutableList().subList(0, 1000)
     val rawDataSetIterator =
         RawDataSetIterator(PackedRawDataSet(rawDataSets = rawDataSets), RawDataSetIterator.IterativeType.QUESTION)
 
@@ -93,22 +90,15 @@ fun main(args: Array<String>) {
     val word2Vec: Word2Vec
 
     if (word2VecFile.exists()) {
-        word2Vec = Word2Vec.Builder()
-            .allowParallelTokenization(true)
-            .tokenizerFactory(tokenizerFactory)
-            .iterate(rawDataSetIterator)
-            .batchSize(WORD2VEC_BATCH_SIZE)
-            .epochs(WORD2VEC_EPOCH)
-            .windowSize(WINDOW_SIZE)
-            .layerSize(LAYER_SIZE)
-            .workers(WORKERS)
-            .build()
-
+        word2Vec = WordVectorSerializer.readWord2Vec(word2VecFile, true)
+        println("Force injecting vocab cache to look up table...")
         val vocabCache = WordVectorSerializer.readVocabCache(vocabCacheFile)
-        val lookUpTable = WordVectorSerializer.readLookupTable<VocabWord>(lookUpTableFile)
+        val prop = InMemoryLookupTable::class.memberProperties.find { it.name == "vocab" }
+        if (prop is KMutableProperty<*>){
+            prop.isAccessible = true
+            prop.setter.call(word2Vec.lookupTable, vocabCache)
+        }
 
-        word2Vec.setVocab(vocabCache)
-        word2Vec.setLookupTable(lookUpTable)
     } else {
         word2Vec = Word2Vec.Builder()
             .allowParallelTokenization(true)
@@ -122,10 +112,10 @@ fun main(args: Array<String>) {
             .build()
 
         word2Vec.fit()
-        WordVectorSerializer.writeLookupTable(word2Vec.lookupTable, lookUpTableFile)
-        WordVectorSerializer.writeVocabCache(word2Vec.vocab, vocabCacheFile)
-        WordVectorSerializer.writeWord2VecModel(word2Vec, word2VecFile)
-     //   WordVectorSerializer.writeWord2VecModel(word2Vec, word2VecFile)
+        println("Saving vocab cache")
+        WordVectorSerializer.writeVocabCache(word2Vec.lookupTable.vocabCache, vocabCacheFile)
+        println("Saving word2vec model...")
+        WordVectorSerializer.writeWord2Vec(word2Vec, word2VecFile.outputStream())
     }
 
     /***
@@ -138,7 +128,6 @@ fun main(args: Array<String>) {
     val srcMaxLen = srcCorpus.maxOf { tokenizerFactory.create(it.question).countTokens() }
     val tarMaxLen = tarCorpus.maxOf { tokenizerFactory.create(it.question).countTokens() }
 
-
     /***
      * Preparing network
      */
@@ -150,7 +139,11 @@ fun main(args: Array<String>) {
             InputType.recurrent(srcMaxLen.toLong()),
             InputType.recurrent(tarMaxLen.toLong())
         )
-        .addLayer("encoder", LSTM.Builder().activation(Activation.TANH).nOut(HIDDEN_LAYER_WIDTH).build(), "encoderInput")
+        .addLayer(
+            "encoder",
+            LSTM.Builder().activation(Activation.TANH).nOut(HIDDEN_LAYER_WIDTH).build(),
+            "encoderInput"
+        )
         .addVertex("outputOfLSTM", LastTimeStepVertex("encoderInput"), "encoder")
         .addVertex("inputOfDecoder", DuplicateToTimeSeriesVertex("decoderInput"), "outputOfLSTM")
         .addVertex("mergeInputAndOutput", MergeVertex(), "decoderInput", "inputOfDecoder")
@@ -182,8 +175,10 @@ fun main(args: Array<String>) {
         var decoderMask = Nd4j.zeros(BATCH_SIZE, WINDOW_SIZE)
         for (i in srcCorpus.indices) {
             if (i % BATCH_SIZE == 0 && i != 0) {
-                val multiDataSet = MultiDataSet(arrayOf(encoderInput,decoderInput), arrayOf(decoderInput), arrayOf(encoderMask,decoderMask),
-                    arrayOf(decoderMask))
+                val multiDataSet = MultiDataSet(
+                    arrayOf(encoderInput, decoderInput), arrayOf(decoderInput), arrayOf(encoderMask, decoderMask),
+                    arrayOf(decoderMask)
+                )
                 model.fit(multiDataSet)
                 encoderInput = Nd4j.zeros(BATCH_SIZE, srcMaxLen, WINDOW_SIZE)
                 encoderMask = Nd4j.ones(BATCH_SIZE, WINDOW_SIZE)
@@ -198,9 +193,9 @@ fun main(args: Array<String>) {
             var tarVector = getSequenceVector(tokenizerFactory.create(tar).tokens, word2Vec)
             //tarVector = Nd4j.pad(tarVector, tarMaxLen, WINDOW_SIZE)
 
-            encoderInput.putRow((i % BATCH_SIZE).toLong(),srcVector)
-            decoderInput.putRow((i % BATCH_SIZE).toLong(),tarVector)
-            decoderMask.putScalar(intArrayOf(i % BATCH_SIZE, WINDOW_SIZE - 1),1)
+            encoderInput.putRow((i % BATCH_SIZE).toLong(), srcVector)
+            decoderInput.putRow((i % BATCH_SIZE).toLong(), tarVector)
+            decoderMask.putScalar(intArrayOf(i % BATCH_SIZE, WINDOW_SIZE - 1), 1)
 
         }
     }
@@ -214,7 +209,8 @@ fun getSequenceVector(tokens: List<String>, word2Vec: Word2Vec): INDArray {
 
     tokens.forEachIndexed { i, s ->
         if (word2Vec.hasWord(s)) {
-            vector.putRow(i.toLong(), word2Vec.getWordVectorMatrix(s))
+
+            vector.putRow(i.toLong(), Nd4j.createFromArray(word2Vec.getWordVector(s).toTypedArray()))
         }
     }
     return vector

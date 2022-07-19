@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation(group = "me.tongfei", name = "progressbar", version = "0.9.3")
+    implementation(kotlin("reflect"))
     implementation(group = "com.github.shin285", name = "KOMORAN", version = "3.3.4")
     implementation(group = "org.json", name = "json", version = "20211205")
     // implementation(group = "org.nd4j", name = "nd4j-native", version = nd4jVersion)

@@ -4,11 +4,8 @@ import dev.isteam.chatbot.dl.api.dataset.DataSetLoader
 import dev.isteam.chatbot.dl.api.dataset.LSTMPackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.PackedRawDataSet
 import dev.isteam.chatbot.dl.api.dataset.RawDataSet
-import me.tongfei.progressbar.ProgressBarBuilder
-import me.tongfei.progressbar.ProgressBarStyle
 import org.json.JSONObject
 import java.io.FileInputStream
-import java.time.temporal.ChronoUnit
 import java.util.concurrent.CompletableFuture
 
 class VIVEDataSetLoader(private val paths: Array<String>) : DataSetLoader {
@@ -19,8 +16,8 @@ class VIVEDataSetLoader(private val paths: Array<String>) : DataSetLoader {
         }
     }
 
-    fun loadDialogues() : CompletableFuture<List<LSTMPackedRawDataSet>>{
-        return CompletableFuture.supplyAsync{
+    fun loadDialogues(): CompletableFuture<List<LSTMPackedRawDataSet>> {
+        return CompletableFuture.supplyAsync {
             var dataSets = arrayListOf<LSTMPackedRawDataSet>()
 
             for (path in paths) {
@@ -47,7 +44,7 @@ class VIVEDataSetLoader(private val paths: Array<String>) : DataSetLoader {
             var body = ctx.getJSONObject("body")
             var dialogues = body.getJSONArray("dialogue")
 
-            if(dialogues.length() > max)
+            if (dialogues.length() > max)
                 max = dialogues.length()
 
             for (j in 0 until dialogues.length()) {

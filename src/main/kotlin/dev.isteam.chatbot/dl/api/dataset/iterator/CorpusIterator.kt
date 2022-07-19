@@ -10,7 +10,6 @@ import org.nd4j.linalg.dataset.api.iterator.MultiDataSetIterator
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.indexing.INDArrayIndex
 import org.nd4j.linalg.indexing.NDArrayIndex
-import java.util.*
 import kotlin.math.ceil
 
 class CorpusIterator(
@@ -70,18 +69,19 @@ class CorpusIterator(
             )
             predictionMask.put(
                 arrayOf(NDArrayIndex.point(j.toLong()), NDArrayIndex.interval(0, rowPred.size)),
-                Nd4j.ones(rowPred.size))
+                Nd4j.ones(rowPred.size)
+            )
 
-            val predOneHot = Array(dictSize){DoubleArray(rowPred.size){0.0} }
-            val decodeOneHot = Array(dictSize){DoubleArray(rowPred.size){0.0} }
+            val predOneHot = Array(dictSize) { DoubleArray(rowPred.size) { 0.0 } }
+            val decodeOneHot = Array(dictSize) { DoubleArray(rowPred.size) { 0.0 } }
 
-            decodeOneHot[2][0]  = 1.0
+            decodeOneHot[2][0] = 1.0
 
             rowPred.forEachIndexed { predIdx, pred ->
-                if(pred.toInt() >= dictSize)
+                if (pred.toInt() >= dictSize)
                     return@forEachIndexed
                 predOneHot[pred.toInt()][predIdx] = 1.0
-                if(predIdx < rowPred.size - 1){
+                if (predIdx < rowPred.size - 1) {
                     decodeOneHot[pred.toInt()][predIdx + 1] = 1.0
                 }
             }
@@ -137,6 +137,7 @@ class CorpusIterator(
         currentBatch = 0
         currentMacroBatch = 0
     }
+
     fun batch(): Int {
         return currentBatch
     }

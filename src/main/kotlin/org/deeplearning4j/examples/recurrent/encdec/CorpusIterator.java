@@ -1,9 +1,5 @@
 package org.deeplearning4j.examples.recurrent.encdec;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.api.MultiDataSet;
@@ -12,6 +8,10 @@ import org.nd4j.linalg.dataset.api.iterator.MultiDataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.indexing.INDArrayIndex;
 import org.nd4j.linalg.indexing.NDArrayIndex;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @SuppressWarnings("serial")
 public class CorpusIterator implements MultiDataSetIterator {
@@ -25,23 +25,22 @@ public class CorpusIterator implements MultiDataSetIterator {
      * it advances (manually) to the next macrobatch.
      */
 
-    private List<List<Double>> corpus;
-    private int batchSize;
-    private int batchesPerMacrobatch;
-    private int totalBatches;
-    private int totalMacroBatches;
+    private final List<List<Double>> corpus;
+    private final int batchSize;
+    private final int batchesPerMacrobatch;
+    private final int totalBatches;
+    private final int totalMacroBatches;
     private int currentBatch = 0;
     private int currentMacroBatch = 0;
-    private int dictSize;
-    private int rowSize;
+    private final int dictSize;
+    private final int rowSize;
 
     /**
-     *
      * @param corpus
      * @param batchSize
      * @param batchesPerMacrobatch
-     * @param dictSize size of all tokens in paragraph
-     * @param rowSize max len of tokens
+     * @param dictSize             size of all tokens in paragraph
+     * @param rowSize              max len of tokens
      */
     public CorpusIterator(List<List<Double>> corpus, int batchSize, int batchesPerMacrobatch, int dictSize, int rowSize) {
         this.corpus = corpus;
@@ -89,15 +88,15 @@ public class CorpusIterator implements MultiDataSetIterator {
             // replace the entire row in "input" using NDArrayIndex, it's faster than putScalar(); input is NOT made of one-hot vectors
             // because of the embedding layer that accepts token indexes directly
 
-            input.put(new INDArrayIndex[] { NDArrayIndex.point(j), NDArrayIndex.point(0), NDArrayIndex.interval(0, rowIn.size()) },
+            input.put(new INDArrayIndex[]{NDArrayIndex.point(j), NDArrayIndex.point(0), NDArrayIndex.interval(0, rowIn.size())},
                     Nd4j.create(ArrayUtils.toPrimitive(rowIn.toArray(new Double[0]))));
-            inputMask.put(new INDArrayIndex[] { NDArrayIndex.point(j), NDArrayIndex.interval(0, rowIn.size()) }, Nd4j.ones(rowIn.size()));
-            predictionMask.put(new INDArrayIndex[] { NDArrayIndex.point(j), NDArrayIndex.interval(0, rowPred.size()) },
+            inputMask.put(new INDArrayIndex[]{NDArrayIndex.point(j), NDArrayIndex.interval(0, rowIn.size())}, Nd4j.ones(rowIn.size()));
+            predictionMask.put(new INDArrayIndex[]{NDArrayIndex.point(j), NDArrayIndex.interval(0, rowPred.size())},
                     Nd4j.ones(rowPred.size()));
             // prediction (output) and decode ARE one-hots though, I couldn't add an embedding layer on top of the decoder and I'm not sure
             // it's a good idea either
-            double predOneHot[][] = new double[dictSize][rowPred.size()];
-            double decodeOneHot[][] = new double[dictSize][rowPred.size()];
+            double[][] predOneHot = new double[dictSize][rowPred.size()];
+            double[][] decodeOneHot = new double[dictSize][rowPred.size()];
             decodeOneHot[2][0] = 1; // <go> token
             int predIdx = 0;
             for (Double pred : rowPred) {
@@ -107,25 +106,25 @@ public class CorpusIterator implements MultiDataSetIterator {
                 }
                 ++predIdx;
             }
-            prediction.put(new INDArrayIndex[] { NDArrayIndex.point(j), NDArrayIndex.interval(0, dictSize),
-                    NDArrayIndex.interval(0, rowPred.size()) }, Nd4j.create(predOneHot));
-            decode.put(new INDArrayIndex[] { NDArrayIndex.point(j), NDArrayIndex.interval(0, dictSize),
-                    NDArrayIndex.interval(0, rowPred.size()) }, Nd4j.create(decodeOneHot));
+            prediction.put(new INDArrayIndex[]{NDArrayIndex.point(j), NDArrayIndex.interval(0, dictSize),
+                    NDArrayIndex.interval(0, rowPred.size())}, Nd4j.create(predOneHot));
+            decode.put(new INDArrayIndex[]{NDArrayIndex.point(j), NDArrayIndex.interval(0, dictSize),
+                    NDArrayIndex.interval(0, rowPred.size())}, Nd4j.create(decodeOneHot));
             ++i;
         }
         ++currentBatch;
-        return new org.nd4j.linalg.dataset.MultiDataSet(new INDArray[] { input, decode }, new INDArray[] { prediction },
-                new INDArray[] { inputMask, predictionMask }, new INDArray[] { predictionMask });
-    }
-
-    @Override
-    public void setPreProcessor(MultiDataSetPreProcessor preProcessor) {
-
+        return new org.nd4j.linalg.dataset.MultiDataSet(new INDArray[]{input, decode}, new INDArray[]{prediction},
+                new INDArray[]{inputMask, predictionMask}, new INDArray[]{predictionMask});
     }
 
     @Override
     public MultiDataSetPreProcessor getPreProcessor() {
         return null;
+    }
+
+    @Override
+    public void setPreProcessor(MultiDataSetPreProcessor preProcessor) {
+
     }
 
     @Override

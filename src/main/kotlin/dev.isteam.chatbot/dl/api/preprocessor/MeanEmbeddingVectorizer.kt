@@ -9,11 +9,11 @@ class MeanEmbeddingVectorizer(val tfid: KoreanTfidfVectorizer, val word2Vec: Wor
     fun transform(tokens: List<String>): INDArray {
         var stack = Nd4j.create(tokens.size, word2Vec.layerSize)
         for (i in tokens.indices) {
-            if(word2Vec.getWordVector(tokens[i]) == null)
+            if (word2Vec.getWordVector(tokens[i]) == null)
                 continue
             stack.putRow(i.toLong(), Nd4j.create(word2Vec.getWordVector(tokens[i])))
         }
-        return Nd4j.mean(stack,1)
+        return Nd4j.mean(stack, 1)
     }
 
     fun transform(tokens: List<String>, input: INDArray): INDArray {

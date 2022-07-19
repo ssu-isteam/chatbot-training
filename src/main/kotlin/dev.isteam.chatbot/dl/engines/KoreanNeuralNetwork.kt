@@ -6,31 +6,20 @@ import org.deeplearning4j.nn.conf.GradientNormalization
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration
 import org.deeplearning4j.nn.conf.RNNFormat
 import org.deeplearning4j.nn.conf.distribution.OrthogonalDistribution
-import org.deeplearning4j.nn.conf.graph.rnn.LastTimeStepVertex
-import org.deeplearning4j.nn.conf.inputs.InputType
-import org.deeplearning4j.nn.conf.layers.DenseLayer
-import org.deeplearning4j.nn.conf.layers.LSTM
-import org.deeplearning4j.nn.conf.layers.LossLayer
-import org.deeplearning4j.nn.conf.layers.OutputLayer
-import org.deeplearning4j.nn.conf.layers.RnnOutputLayer
+import org.deeplearning4j.nn.conf.layers.*
 import org.deeplearning4j.nn.conf.layers.misc.RepeatVector
 import org.deeplearning4j.nn.conf.layers.recurrent.LastTimeStep
 import org.deeplearning4j.nn.conf.layers.recurrent.TimeDistributed
 import org.deeplearning4j.nn.conf.layers.variational.VariationalAutoencoder
 import org.deeplearning4j.nn.conf.preprocessor.RnnToFeedForwardPreProcessor
 import org.deeplearning4j.nn.graph.ComputationGraph
-import org.deeplearning4j.nn.layers.recurrent.LastTimeStepLayer
-import org.deeplearning4j.nn.layers.recurrent.TimeDistributedLayer
-import org.deeplearning4j.nn.modelimport.keras.KerasModelImport
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.nd4j.linalg.activations.Activation
-import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.learning.config.Adam
 import org.nd4j.linalg.learning.config.Nesterovs
 import org.nd4j.linalg.learning.config.RmsProp
 import org.nd4j.linalg.lossfunctions.LossFunctions
-import org.nd4j.nativeblas.Nd4jCuda.NDArray
 import kotlin.math.pow
 
 object KoreanNeuralNetwork {
@@ -87,29 +76,39 @@ object KoreanNeuralNetwork {
             .build()
         return MultiLayerNetwork(modelConf)
     }
-    fun buildSeq2Seq(inputSize: Int) : MultiLayerNetwork{
+
+    fun buildSeq2Seq(inputSize: Int): MultiLayerNetwork {
         val conf = NeuralNetConfiguration.Builder()
             .activation(Activation.TANH)
             .updater(Adam(1e-2))
             .list()
-            .layer(0, LSTM.Builder()
-                .nIn(inputSize)
-                .units(LSTM_LAYERSIZE)
-                .build())
-            .layer(1, RepeatVector.Builder()
-                .repetitionFactor(inputSize).build())
-            .layer(2, LSTM.Builder()
-                .units(LSTM_LAYERSIZE)
-                .build())
+            .layer(
+                0, LSTM.Builder()
+                    .nIn(inputSize)
+                    .units(LSTM_LAYERSIZE)
+                    .build()
+            )
+            .layer(
+                1, RepeatVector.Builder()
+                    .repetitionFactor(inputSize).build()
+            )
+            .layer(
+                2, LSTM.Builder()
+                    .units(LSTM_LAYERSIZE)
+                    .build()
+            )
             .layer(3, TimeDistributed(DenseLayer.Builder().units(1).build()))
-            .layer(4, RnnOutputLayer.Builder()
-                .nOut(inputSize)
-                .lossFunction(LossFunctions.LossFunction.MSE)
-                .build())
+            .layer(
+                4, RnnOutputLayer.Builder()
+                    .nOut(inputSize)
+                    .lossFunction(LossFunctions.LossFunction.MSE)
+                    .build()
+            )
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
             .build()
         return MultiLayerNetwork(conf)
     }
+
     fun buildDeepAutoEncoder(inputSize: Int): MultiLayerNetwork {
 
         val unit = 7
@@ -147,24 +146,32 @@ object KoreanNeuralNetwork {
 
         return MultiLayerNetwork(modelConf.build())
     }
-    fun buildLSTMAutoencoder(inputSize:Int) : ComputationGraph{
+
+    fun buildLSTMAutoencoder(inputSize: Int): ComputationGraph {
         val conf = NeuralNetConfiguration.Builder()
             .weightInit(WeightInit.XAVIER)
             .updater(Adam(0.5))
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .graphBuilder()
             .addInputs("input")
-            .addLayer("encoder", LSTM.Builder().nIn(inputSize) .units(100)
-                .activation(Activation.RELU).build(),"input")
-            .addLayer("rv",RepeatVector.Builder(inputSize).build(),"encoder")
-            .addLayer("decoder", LSTM.Builder().units(100).activation(Activation.RELU).build(),"rv")
-            .addLayer("td",TimeDistributed(DenseLayer.Builder().units(100).build()),"decoder")
-            .addLayer("output", RnnOutputLayer.Builder().units(100).nOut(inputSize).lossFunction(LossFunctions.LossFunction.MSE).build(),"td")
+            .addLayer(
+                "encoder", LSTM.Builder().nIn(inputSize).units(100)
+                    .activation(Activation.RELU).build(), "input"
+            )
+            .addLayer("rv", RepeatVector.Builder(inputSize).build(), "encoder")
+            .addLayer("decoder", LSTM.Builder().units(100).activation(Activation.RELU).build(), "rv")
+            .addLayer("td", TimeDistributed(DenseLayer.Builder().units(100).build()), "decoder")
+            .addLayer("output",
+                RnnOutputLayer.Builder().units(100).nOut(inputSize).lossFunction(LossFunctions.LossFunction.MSE)
+                    .build(),
+                "td"
+            )
             .setOutputs("output")
             .backpropType(BackpropType.TruncatedBPTT).tBPTTForwardLength(TBTT_SIZE).tBPTTBackwardLength(TBTT_SIZE)
             .build()
         return ComputationGraph(conf)
     }
+
     fun buildVariationalAutoEncoder(inputSize: Int): MultiLayerNetwork {
 
         val unit = 7
@@ -195,7 +202,8 @@ object KoreanNeuralNetwork {
 
         return MultiLayerNetwork(modelConf.build())
     }
-    fun buildLSTMReconstruction(inputSize: Int) : MultiLayerNetwork{
+
+    fun buildLSTMReconstruction(inputSize: Int): MultiLayerNetwork {
         val lstm = LSTM.Builder()
             .nIn(inputSize)
             .nOut(100)
@@ -205,43 +213,54 @@ object KoreanNeuralNetwork {
             .weightInit(OrthogonalDistribution(1.0))
             .build()
         lstm.rnnDataFormat = RNNFormat.NWC
-        return MultiLayerNetwork(NeuralNetConfiguration.Builder()
-            .seed(34560)
-            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-            .updater(Adam(0.001))
-            .list()
-            .layer(0, LastTimeStep(lstm))
-            .layer(1, RepeatVector.Builder(inputSize)
-                .nOut(0)
-                .nIn(100)
-                .weightInit(WeightInit.XAVIER)
-                .activation(Activation.SIGMOID).dataFormat(RNNFormat.NWC)
-                .build())
-            .layer(2,LSTM.Builder()
-                .nIn(50)
-                .nOut(100)
-                .activation(Activation.RELU)
-                .weightInit(OrthogonalDistribution(1.0))
-                .gateActivationFunction(Activation.SIGMOID)
-                .build())
-            .layer(3, DenseLayer.Builder()
-                .activation(Activation.IDENTITY)
-                .nIn(100)
-                .units(inputSize)
-                .weightInit(WeightInit.XAVIER_UNIFORM)
-                .units(inputSize)
-                .build())
-            .layer(4, LossLayer.Builder()
-                .activation(Activation.IDENTITY)
-                .lossFunction(LossFunctions.LossFunction.MSE)
-                .weightInit(WeightInit.XAVIER)
-                .build())
-            .validateOutputLayerConfig(true)
-            .inputPreProcessor(3, RnnToFeedForwardPreProcessor(RNNFormat.NWC))
-            .build())
+        return MultiLayerNetwork(
+            NeuralNetConfiguration.Builder()
+                .seed(34560)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                .updater(Adam(0.001))
+                .list()
+                .layer(0, LastTimeStep(lstm))
+                .layer(
+                    1, RepeatVector.Builder(inputSize)
+                        .nOut(0)
+                        .nIn(100)
+                        .weightInit(WeightInit.XAVIER)
+                        .activation(Activation.SIGMOID).dataFormat(RNNFormat.NWC)
+                        .build()
+                )
+                .layer(
+                    2, LSTM.Builder()
+                        .nIn(50)
+                        .nOut(100)
+                        .activation(Activation.RELU)
+                        .weightInit(OrthogonalDistribution(1.0))
+                        .gateActivationFunction(Activation.SIGMOID)
+                        .build()
+                )
+                .layer(
+                    3, DenseLayer.Builder()
+                        .activation(Activation.IDENTITY)
+                        .nIn(100)
+                        .units(inputSize)
+                        .weightInit(WeightInit.XAVIER_UNIFORM)
+                        .units(inputSize)
+                        .build()
+                )
+                .layer(
+                    4, LossLayer.Builder()
+                        .activation(Activation.IDENTITY)
+                        .lossFunction(LossFunctions.LossFunction.MSE)
+                        .weightInit(WeightInit.XAVIER)
+                        .build()
+                )
+                .validateOutputLayerConfig(true)
+                .inputPreProcessor(3, RnnToFeedForwardPreProcessor(RNNFormat.NWC))
+                .build()
+        )
 
 
     }
+
     fun buildVariationalAutoEncoder_(inputSize: Int): MultiLayerNetwork {
         var modelConf = NeuralNetConfiguration.Builder()
             .seed(12356)
@@ -276,7 +295,7 @@ object KoreanNeuralNetwork {
                     .nIn(inputSize).nOut(LSTM_LAYERSIZE).activation(Activation.TANH)
                     .build()
             )
-            .layer(1,DenseLayer.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH).build())
+            .layer(1, DenseLayer.Builder().nIn(LSTM_LAYERSIZE).nOut(LSTM_LAYERSIZE).activation(Activation.TANH).build())
             .layer(
                 2, RnnOutputLayer.Builder(LossFunctions.LossFunction.MEAN_ABSOLUTE_ERROR)
                     .activation(Activation.TANH)

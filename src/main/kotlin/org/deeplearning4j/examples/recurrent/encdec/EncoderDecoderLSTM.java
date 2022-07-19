@@ -7,7 +7,6 @@ import org.deeplearning4j.nn.conf.BackpropType;
 import org.deeplearning4j.nn.conf.ComputationGraphConfiguration.GraphBuilder;
 import org.deeplearning4j.nn.conf.GradientNormalization;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
-import org.deeplearning4j.nn.conf.Updater;
 import org.deeplearning4j.nn.conf.graph.MergeVertex;
 import org.deeplearning4j.nn.conf.graph.rnn.DuplicateToTimeSeriesVertex;
 import org.deeplearning4j.nn.conf.graph.rnn.LastTimeStepVertex;
@@ -103,10 +102,6 @@ public class EncoderDecoderLSTM {
      * Neural Networks
      */
 
-    private final Map<String, Double> dict = new HashMap<>();
-    private final Map<Double, String> revDict = new HashMap<>();
-    private final String CHARS = "-\\/_&" + CorpusProcessor.SPECIALS;
-    private List<List<Double>> corpus = new ArrayList<>();
     private static final int HIDDEN_LAYER_WIDTH = 512; // this is purely empirical, affects performance and VRAM requirement
     private static final int EMBEDDING_WIDTH = 128; // one-hot vectors will be embedded to more dense vectors with this width
     private static final String CORPUS_FILENAME = "movie_lines.txt"; // filename of data corpus to learn
@@ -125,6 +120,10 @@ public class EncoderDecoderLSTM {
     private static final int GC_WINDOW = 2000; // delay between garbage collections, try to reduce if you run out of VRAM or increase for
     // better performance
     private static final int MACROBATCH_SIZE = 20; // see CorpusIterator
+    private final Map<String, Double> dict = new HashMap<>();
+    private final Map<Double, String> revDict = new HashMap<>();
+    private final String CHARS = "-\\/_&" + CorpusProcessor.SPECIALS;
+    private final List<List<Double>> corpus = new ArrayList<>();
     private ComputationGraph net;
 
     public static void main(String[] args) throws IOException {
@@ -145,7 +144,7 @@ public class EncoderDecoderLSTM {
             String input;
             try (Scanner scanner = new Scanner(System.in)) {
                 input = scanner.nextLine();
-                if (input.toLowerCase().equals("d")) {
+                if (input.equalsIgnoreCase("d")) {
                     startDialog(scanner);
                 } else {
                     offset = Integer.valueOf(input);
@@ -298,11 +297,11 @@ public class EncoderDecoderLSTM {
         for (int row = 0; row < ROW_SIZE; ++row) {
             mergeVertex.setInputs(decode, thoughtVector);
 
-            mergeVertex.doForward(false,null);
-            INDArray merged = mergeVertex.doForward(false,null);
+            mergeVertex.doForward(false, null);
+            INDArray merged = mergeVertex.doForward(false, null);
 
-            INDArray activateDec = decoder.rnnTimeStep(merged,null);
-           INDArray out = output.activate(activateDec, false,null);
+            INDArray activateDec = decoder.rnnTimeStep(merged, null);
+            INDArray out = output.activate(activateDec, false, null);
             double d = rnd.nextDouble();
             double sum = 0.0;
             int idx = -1;
@@ -328,7 +327,7 @@ public class EncoderDecoderLSTM {
 
     }
 
-    private void createDictionary() throws IOException, FileNotFoundException {
+    private void createDictionary() throws IOException {
         double idx = 3.0;
         dict.put("<unk>", 0.0);
         revDict.put(0.0, "<unk>");
