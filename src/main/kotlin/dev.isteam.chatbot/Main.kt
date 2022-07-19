@@ -28,6 +28,7 @@ import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.MultiDataSet
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.learning.config.AdaGrad
+import org.nd4j.linalg.lossfunctions.LossFunctions
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -56,8 +57,8 @@ private const val RMS_DECAY = 0.95
  */
 private const val EMBEDDING_WIDTH = 128
 private const val HIDDEN_LAYER_WIDTH = 512
-private const val BATCH_SIZE = 32
-private const val EPOCH = 20
+private const val BATCH_SIZE = 1000
+private const val EPOCH = 5
 private const val MODEL_PATH = "model.h5"
 
 
@@ -75,7 +76,7 @@ fun main(args: Array<String>) {
 
     val rawDataSets =
         VIVEDataSetLoader(arrayOf(dataPath)).loadDialogues().get().flatMap { it.dialogues }.flatMap { it.rawDataSets }
-            .toMutableList().subList(0, 1000)
+            .toMutableList()
     val rawDataSetIterator =
         RawDataSetIterator(PackedRawDataSet(rawDataSets = rawDataSets), RawDataSetIterator.IterativeType.QUESTION)
 
@@ -152,7 +153,7 @@ fun main(args: Array<String>) {
             LSTM.Builder().nIn(HIDDEN_LAYER_WIDTH + tarMaxLen).nOut(tarMaxLen).activation(Activation.TANH).build(),
             "mergeInputAndOutput"
         )
-        .addLayer("outputLayer", RnnOutputLayer.Builder().nOut(tarMaxLen.toLong()).build(), "decoder")
+        .addLayer("outputLayer", RnnOutputLayer.Builder().nOut(tarMaxLen.toLong()).lossFunction(LossFunctions.LossFunction.SQUARED_LOSS) .build(), "decoder")
         .setOutputs("outputLayer")
         .build()
 
