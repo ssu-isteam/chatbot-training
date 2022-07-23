@@ -7,6 +7,7 @@ import dev.isteam.chatbot.dl.api.dataset.preprocessor.KoreanTokenPreprocessor
 import dev.isteam.chatbot.dl.api.tokenizer.KoreanTokenizerFactory
 import org.deeplearning4j.models.embeddings.inmemory.InMemoryLookupTable
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
+import org.deeplearning4j.models.word2vec.VocabWord
 import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.nn.api.MaskState
 import org.deeplearning4j.nn.conf.InputPreProcessor
@@ -57,7 +58,7 @@ private const val RMS_DECAY = 0.95
  */
 private const val EMBEDDING_WIDTH = 128
 private const val HIDDEN_LAYER_WIDTH = 512
-private const val BATCH_SIZE = 1000
+private const val BATCH_SIZE = 100
 private const val EPOCH = 5
 private const val MODEL_PATH = "model.h5"
 
@@ -75,10 +76,9 @@ fun main(args: Array<String>) {
     /***
      * Preparing dataset
      */
-
     val rawDataSets =
         VIVEDataSetLoader(arrayOf(dataPath)).loadDialogues().get().flatMap { it.dialogues }.flatMap { it.rawDataSets }
-            .toMutableList()
+            .toMutableList().onEach { it.question = "sos " + it.question + " eos" }
     val rawDataSetIterator =
         RawDataSetIterator(PackedRawDataSet(rawDataSets = rawDataSets), RawDataSetIterator.IterativeType.QUESTION)
 
@@ -88,6 +88,8 @@ fun main(args: Array<String>) {
     val tokenizerFactory = KoreanTokenizerFactory().apply {
         tokenPreProcessor = KoreanTokenPreprocessor()
     }
+
+
 
 
     val word2Vec: Word2Vec

@@ -18,7 +18,7 @@ class KoreanTokenizerFactory(private val koreanAnalyzer: Komoran = Komoran(DEFAU
      * @return the new tokenizer
      */
     override fun create(toTokenize: String?): Tokenizer {
-        if (toTokenize?.isNullOrEmpty()!!)
+        if (toTokenize?.isEmpty()!!)
             return KoreanTokenizer(listOf())
         var result = koreanAnalyzer.analyze(toTokenize)
         var tokenizer = KoreanTokenizer(result.tokenList)
